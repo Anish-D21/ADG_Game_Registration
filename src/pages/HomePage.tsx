@@ -1,5 +1,6 @@
 import React from 'react';
 import { AmongUsIllustration } from '../components/AmongUsIllustration.tsx';
+import { useEventConfig } from '../services/useEventConfig.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { ShieldAlert, Users, Calendar, MapPin, CheckCircle, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
 
@@ -8,6 +9,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
+  const { payment, money } = useEventConfig();
   return (
     <div className="space-y-16 pb-12">
       {/* Hero Section with Poster Artwork & 4 Steps */}
@@ -63,7 +65,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
                 <h3 className="font-arcade text-base font-bold text-[#111827]">Entry Pass & QR</h3>
               </div>
               <p className="text-sm font-body text-[#111827] leading-relaxed">
-                Registration is <strong className="font-bold">₹500 / team</strong>. Official printable PDF pass with cryptographic QR code is issued immediately upon verified payment.
+                Registration is <strong className="font-bold">{money(payment.perHeadAmount)} per player</strong> ({money(payment.minTeamAmount)}–{money(payment.maxTeamAmount)} per squad). Official printable PDF pass with cryptographic QR code is issued immediately upon verified payment.
               </p>
             </div>
           </div>

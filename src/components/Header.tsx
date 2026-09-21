@@ -16,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
     { id: 'rules', label: 'Rules' },
     { id: 'faq', label: 'FAQ' },
     { id: 'status', label: 'Check Status' },
+    { id: 'payments', label: 'Payment Desk', icon: Lock },
     { id: 'admin', label: 'Admin Portal', icon: Lock }
   ];
 
@@ -75,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
                   isActive
                     ? 'bg-[#111827] text-white border-2 border-[#111827] shadow-[2px_2px_0_0_#E5005A]'
                     : 'bg-transparent text-[#111827] hover:bg-[#FFFDF0] hover:border-2 hover:border-[#111827]'
-                } ${item.id === 'admin' ? 'border-2 border-[#111827]/50 text-xs text-[#111827]' : ''}`}
+                } ${item.id === 'admin' || item.id === 'payments' ? 'border-2 border-[#111827]/50 text-xs text-[#111827]' : ''}`}
               >
                 <span className="flex items-center gap-1.5">
                   {Icon && <Icon className="w-3.5 h-3.5" />}

@@ -8,8 +8,14 @@ export class ManualUPIProvider extends PaymentProvider {
 
   async createPayment({ registrationId, amount, currency = 'INR', customer }) {
     const paymentId = `PAY_UPI_${Date.now()}`;
-    const vpa = 'adg.deception@sbi';
-    const qrUri = `upi://pay?pa=${vpa}&pn=ADG%20DECEPTION&am=${amount}&cu=${currency}&tr=${registrationId}`;
+    const vpa = process.env.UPI_VPA || 'adg.deception@sbi';
+    const payee = encodeURIComponent(process.env.UPI_PAYEE_NAME || 'ADG DECEPTION');
+    // tn (note) and tr (reference) both carry the registration ID so the payment is
+    // identifiable in the bank statement when the organiser reconciles.
+    // No amount is pre-filled: members may be paying their own share rather than the
+    // squad total, so the payer types the figure. The registration ID still rides along
+    // as the reference so the credit is identifiable in the bank statement.
+    const qrUri = `upi://pay?pa=${vpa}&pn=${payee}&cu=${currency}&tr=${registrationId}&tn=${encodeURIComponent('DECEPTION ' + registrationId)}`;
 
     return {
       success: true,
@@ -21,7 +27,8 @@ export class ManualUPIProvider extends PaymentProvider {
       qrData: qrUri,
       upiUrl: qrUri,
       vpa,
-      instructions: 'Scan the UPI QR code using Google Pay, PhonePe, or Paytm, complete the payment of INR 500, and submit the 12-digit UTR transaction reference number.'
+      payeeName: process.env.UPI_PAYEE_NAME || 'ADG DECEPTION',
+      instructions: `Scan the QR with any UPI app, pay your share (or the full squad amount), then submit the 12-digit UTR reference along with how much you paid. Each member who pays should submit their own reference.`
     };
   }
 

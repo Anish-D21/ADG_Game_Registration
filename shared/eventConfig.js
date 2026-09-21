@@ -33,7 +33,10 @@ export const EVENT_CONFIG = {
   registrationConfig: {
     allowMultipleTeams: false,
     registrationOpen: true,
-    amount: 500,
+    // DEFAULTS ONLY. The live values come from PER_HEAD_AMOUNT / CURRENCY in .env and
+    // are substituted by the server before this config reaches the browser, so the fee
+    // never has to be changed in more than one place.
+    perHeadAmount: 100,
     currency: "INR"
   },
 
@@ -99,7 +102,7 @@ export const EVENT_CONFIG = {
     },
     {
       category: "Registration Fee & Confirmation",
-      rule: "Registration fee is INR 500 per team. Official entrance pass with verification QR and receipt is issued only after confirmed payment."
+      rule: "Registration fee is {{CURRENCY}} {{PER_HEAD}} per participant, so a squad of 5 pays {{TEAM_5}} and a squad of 6 pays {{TEAM_6}}. Members may pay individually or one person may pay for the whole squad. The entrance pass with verification QR is issued only once the full squad amount is confirmed."
     }
   ],
 
@@ -122,7 +125,7 @@ export const EVENT_CONFIG = {
     },
     {
       q: "How does payment work?",
-      a: "After filling team details and player cards, you proceed to the payment gateway. You can complete the INR 500 payment via online payment or UPI, or submit your UPI UTR reference for manual verification."
+      a: "After filling team details and player cards, you proceed to payment. The fee is {{CURRENCY}} {{PER_HEAD}} per participant ({{TEAM_5}} for a squad of 5, {{TEAM_6}} for a squad of 6). Pay by UPI, then submit your UTR reference and the amount you paid. Each member who pays should submit their own reference."
     },
     {
       q: "When will I receive our team ticket and QR pass?",

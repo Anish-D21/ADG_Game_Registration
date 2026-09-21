@@ -7,6 +7,7 @@
  */
 
 import { PaymentStatus, RegistrationStatus } from '../../../shared/payment-contract/payment-status.js';
+import { hashPassword } from '../utils/password.js';
 import { EVENT_CONFIG } from '../../../shared/eventConfig.js';
 
 class DataStore {
@@ -25,6 +26,11 @@ class DataStore {
     this.registrationCounter = 100;
 
     this.initDefaultData();
+
+    // The demo registrations hardcode GAME26-00101/00102 without advancing the counter,
+    // so without this the first two real teams are handed IDs that already exist and
+    // every lookup resolves to the demo record instead of theirs.
+    this.syncRegistrationCounter();
   }
 
   initDefaultData() {
@@ -48,14 +54,20 @@ class DataStore {
       _id: 'admin_root',
       username: 'adg_admin',
       email: 'admin@adg.org',
-      // Simple sha256 or bcrypt representation; we check matching password in auth
-      passwordHash: 'Deception@2026',
+      // Hashed at boot from ADMIN_PASSWORD. Never stored in plaintext.
+      passwordHash: hashPassword(process.env.ADMIN_PASSWORD || 'Deception@2026'),
       role: 'SUPER_ADMIN',
       name: 'ADG Lead Organizer',
       createdAt: new Date()
     });
 
-    // 3. Seed one sample verified registration for demo & verification showcase
+    // 3. Demo registrations. These are illustrative only and pollute the dashboard,
+    //    the Excel exports and the revenue total, so they are opt-in.
+    if (process.env.SEED_DEMO_DATA !== 'true') {
+      return;
+    }
+
+
     const sampleRegId = 'GAME26-00101';
     const sampleTeamId = 'team_sample_alpha';
 
@@ -375,10 +387,27 @@ class DataStore {
     });
   }
 
+  /**
+   * Advance the counter past the highest ID already present, whatever its origin
+   * (demo seed, or records restored from the database).
+   */
+  syncRegistrationCounter() {
+    const highest = this.registrations.reduce((max, r) => {
+      const n = parseInt(String(r.registrationId || '').replace('GAME26-', ''), 10);
+      return Number.isFinite(n) && n > max ? n : max;
+    }, this.registrationCounter);
+    this.registrationCounter = highest;
+  }
+
   generateRegistrationId() {
     this.registrationCounter += 1;
-    const padded = String(this.registrationCounter).padStart(5, '0');
-    return `GAME26-${padded}`;
+    let candidate = `GAME26-${String(this.registrationCounter).padStart(5, '0')}`;
+    // Defensive: never hand out an ID that is already taken.
+    while (this.registrations.some(r => r.registrationId === candidate)) {
+      this.registrationCounter += 1;
+      candidate = `GAME26-${String(this.registrationCounter).padStart(5, '0')}`;
+    }
+    return candidate;
   }
 
   logAudit({ actor = 'SYSTEM', action, entity, entityId, metadata = {} }) {

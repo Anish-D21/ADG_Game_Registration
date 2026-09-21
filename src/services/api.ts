@@ -51,7 +51,7 @@ export async function fetchPaymentStatus(registrationId: string) {
   return res.json();
 }
 
-export async function submitManualUpi(registrationId: string, data: { transactionReference: string; evidenceUrl?: string }) {
+export async function submitManualUpi(registrationId: string, data: { transactionReference: string; amount: number; payerName?: string; evidenceUrl?: string }) {
   const res = await fetch(`${API_BASE}/payments/${encodeURIComponent(registrationId)}/manual-upi`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEventConfig } from '../services/useEventConfig.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -7,6 +8,7 @@ interface FaqPageProps {
 }
 
 export const FaqPage: React.FC<FaqPageProps> = ({ setActiveTab }) => {
+  const { game } = useEventConfig();
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   const toggleFaq = (idx: number) => {
@@ -30,7 +32,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ setActiveTab }) => {
 
       {/* Accordion List */}
       <div className="space-y-3">
-        {EVENT_CONFIG.faqs.map((faq, idx) => {
+        {game.faqs.map((faq: any, idx: number) => {
           const isOpen = openIdx === idx;
           return (
             <div
