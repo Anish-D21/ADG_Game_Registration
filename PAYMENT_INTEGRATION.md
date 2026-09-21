@@ -1,8 +1,9 @@
 # PAYMENT INTEGRATION CONTRACT & HANDOFF GUIDE
+
 **Project:** DECEPTION - Event Registration System  
 **Organization:** AI DEVELOPERS GROUP (ADG) x MosaIC  
 **Event Date:** 16–17 October 2026 | **Venue:** Room No. 318  
-**Architecture:** Part 1 (Main App) & Part 2 (Payment Service)  
+**Architecture:** Part 1 (Main App) & Part 2 (Payment Service)
 
 ---
 
@@ -26,17 +27,17 @@ The registration system is architected with a strict separation between **Part 1
 
 The Main App **only** accepts these normalized statuses:
 
-| Status Key | Meaning | Main App Action |
-|---|---|---|
-| `NOT_STARTED` | Payment has not been initiated | Registration in `PAYMENT_PENDING` |
-| `PENDING` | Order created at gateway, waiting for payer | Display checkout/QR |
-| `PROCESSING` | Payer submitted, awaiting bank confirmation | Polling / loading |
-| `PAID` | Funds successfully captured & verified | Automatically sets Registration to `CONFIRMED`, triggers QR ticket PDF, receipt, and confirmation email |
-| `PENDING_VERIFICATION` | Payer submitted UTR/screenshot (Manual UPI) | Registration in `PAYMENT_VERIFICATION`, moves to Admin Queue |
-| `FAILED` | Payment failed or bank rejected | Payer can retry |
-| `REJECTED` | Admin or Fraud check declined the payment | Registration in `REJECTED` |
-| `CANCELLED` | User or system cancelled | Payer can re-initiate |
-| `EXPIRED` | Order expired | Payer can re-initiate |
+| Status Key             | Meaning                                     | Main App Action                                                                                         |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `NOT_STARTED`          | Payment has not been initiated              | Registration in `PAYMENT_PENDING`                                                                       |
+| `PENDING`              | Order created at gateway, waiting for payer | Display checkout/QR                                                                                     |
+| `PROCESSING`           | Payer submitted, awaiting bank confirmation | Polling / loading                                                                                       |
+| `PAID`                 | Funds successfully captured & verified      | Automatically sets Registration to `CONFIRMED`, triggers QR ticket PDF, receipt, and confirmation email |
+| `PENDING_VERIFICATION` | Payer submitted UTR/screenshot (Manual UPI) | Registration in `PAYMENT_VERIFICATION`, moves to Admin Queue                                            |
+| `FAILED`               | Payment failed or bank rejected             | Payer can retry                                                                                         |
+| `REJECTED`             | Admin or Fraud check declined the payment   | Registration in `REJECTED`                                                                              |
+| `CANCELLED`            | User or system cancelled                    | Payer can re-initiate                                                                                   |
+| `EXPIRED`              | Order expired                               | Payer can re-initiate                                                                                   |
 
 ---
 
@@ -45,9 +46,11 @@ The Main App **only** accepts these normalized statuses:
 Your Part 2 service should expose or plug into the following HTTP endpoints:
 
 ### Endpoint A: Create Payment
+
 - **Route:** `POST /api/payments/create`
 - **Headers:** `Content-Type: application/json`
 - **Request Payload:**
+
 ```json
 {
   "registrationId": "GAME26-00125",
@@ -64,6 +67,7 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
 ```
 
 - **Normalized Response (Gateway Checkout / QR):**
+
 ```json
 {
   "success": true,
@@ -79,6 +83,7 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
 ```
 
 - **Normalized Response (Instant Mock or Direct Settlement):**
+
 ```json
 {
   "success": true,
@@ -94,8 +99,10 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
 ---
 
 ### Endpoint B: Payment Status Query
+
 - **Route:** `GET /api/payments/:registrationId`
 - **Response:**
+
 ```json
 {
   "success": true,
@@ -114,8 +121,10 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
 ---
 
 ### Endpoint C: Manual UPI UTR Submission
+
 - **Route:** `POST /api/payments/:registrationId/manual-upi`
 - **Request Payload:**
+
 ```json
 {
   "transactionReference": "426189012345",
@@ -123,7 +132,9 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
   "evidencePublicId": "uploads/receipt_123"
 }
 ```
+
 - **Normalized Response:**
+
 ```json
 {
   "success": true,
@@ -135,6 +146,7 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
 ---
 
 ### Endpoint D: Webhook Callback from Gateway
+
 - **Route:** `POST /api/payments/webhook`
 - **Headers:** `X-Razorpay-Signature` (or provider equivalent)
 - **Behavior:**
@@ -148,18 +160,20 @@ Your Part 2 service should expose or plug into the following HTTP endpoints:
 ## 4. How to Plug In Your Real Provider
 
 In `backend/src/services/payment/`:
+
 1. Inspect `interfaces/PaymentProvider.js`.
 2. Implement your concrete class:
+
    ```javascript
-   import PaymentProvider from '../interfaces/PaymentProvider.js';
-   import Razorpay from 'razorpay';
+   import PaymentProvider from "../interfaces/PaymentProvider.js";
+   import Razorpay from "razorpay";
 
    export class RazorpayProvider extends PaymentProvider {
      constructor() {
-       super('RAZORPAY');
+       super("RAZORPAY");
        this.client = new Razorpay({
          key_id: process.env.RAZORPAY_KEY_ID,
-         key_secret: process.env.RAZORPAY_KEY_SECRET
+         key_secret: process.env.RAZORPAY_KEY_SECRET,
        });
      }
 
@@ -168,17 +182,17 @@ In `backend/src/services/payment/`:
          amount: amount * 100, // paise
          currency,
          receipt: registrationId,
-         notes: { registrationId }
+         notes: { registrationId },
        });
 
        return {
          success: true,
          paymentId: order.id,
-         status: 'PENDING',
-         method: 'RAZORPAY',
+         status: "PENDING",
+         method: "RAZORPAY",
          amount,
          currency,
-         redirectUrl: null
+         redirectUrl: null,
        };
      }
 
@@ -187,11 +201,13 @@ In `backend/src/services/payment/`:
      }
    }
    ```
+
 3. In `backend/src/services/payment/PaymentService.js`, set:
    ```javascript
-   const activeProvider = process.env.MOCK_PAYMENT === 'true' 
-     ? new MockPaymentProvider() 
-     : new RazorpayProvider();
+   const activeProvider =
+     process.env.MOCK_PAYMENT === "true"
+       ? new MockPaymentProvider()
+       : new RazorpayProvider();
    ```
 
 ---
@@ -199,6 +215,7 @@ In `backend/src/services/payment/`:
 ## 5. Testing With Mock Provider (Out of the Box)
 
 During development, `MOCK_PAYMENT=true` in `.env`.
+
 - You can register a team, go to the payment screen, click **"Simulate Instant Success (Mock)"** or **"Submit UTR for Verification"**, and test the complete end-to-end flow without real money.
 - The Admin portal includes a dedicated **Payment Verification** queue where admins can review submitted UTRs and screenshots, and either click **"Verify"** (which moves status to `PAID` + generates tickets) or **"Reject"**.
 
