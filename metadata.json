@@ -1,0 +1,6 @@
+{
+  "name": "DECEPTION - Event Registration System",
+  "description": "Official event registration platform for DECEPTION (ADG x MosaIC) - Room 318, 16-17 Oct 2026. Featuring Among Us mystery theme, team registration, ID card verification, and admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
