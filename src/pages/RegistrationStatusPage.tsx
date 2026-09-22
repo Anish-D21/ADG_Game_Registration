@@ -222,31 +222,31 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   const isPaymentPending = registration?.payment?.status === 'PENDING' || registration?.status === 'PENDING_PAYMENT';
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-4xl mx-auto px-3.5 sm:px-4 py-5 sm:py-8 space-y-6 sm:space-y-8">
       {/* Search Header */}
-      <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 sm:p-8 space-y-4">
-        <span className="bg-[#00AFC6] text-white font-pixel text-xs px-2.5 py-1 border-2 border-[#111827]">
+      <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8 space-y-4">
+        <span className="bg-[#00AFC6] text-white font-pixel text-[10px] sm:text-xs px-2.5 py-1 border-2 border-[#111827] inline-block">
           VERIFICATION PORTAL
         </span>
-        <h1 className="font-pixel text-2xl sm:text-3xl text-[#111827] tracking-wider">
+        <h1 className="font-pixel text-xl sm:text-3xl text-[#111827] tracking-wider">
           REGISTRATION & PASS STATUS
         </h1>
         <p className="text-xs sm:text-sm font-body text-[#111827]/80">
           Enter your unique Registration Code (e.g. <span className="font-mono font-bold">GAME26-00101</span>) to view squad details, download your QR entry pass, and check payment status.
         </p>
 
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 pt-2">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-2">
           <input
             type="text"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
             placeholder="Enter Registration Code (GAME26-XXXXX)"
-            className="flex-1 px-4 py-3 bg-[#FFFDF0] border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] font-mono text-sm focus:outline-none uppercase"
+            className="flex-1 px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#FFFDF0] border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] font-mono text-xs sm:text-sm focus:outline-none uppercase"
           />
           <button
             type="submit"
             disabled={loading}
-            className="bg-[#E5005A] text-white font-arcade text-xs sm:text-sm px-6 py-3 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#111827] transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto bg-[#E5005A] text-white font-arcade text-xs sm:text-sm px-6 py-3 border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#111827] transition-colors disabled:opacity-50"
           >
             <Search className="w-4 h-4" /> {loading ? 'SEARCHING...' : 'CHECK STATUS'}
           </button>
@@ -255,41 +255,41 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
 
       {/* Error Message */}
       {errorMsg && (
-        <div className="p-4 bg-[#E5005A] text-white border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
-          <AlertTriangle className="w-6 h-6 shrink-0 text-[#F4C430]" />
+        <div className="p-3.5 sm:p-4 bg-[#E5005A] text-white border-2 sm:border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-[#F4C430]" />
           <div className="text-xs sm:text-sm font-arcade">{errorMsg}</div>
         </div>
       )}
 
       {/* Registration Details Card */}
       {registration && (
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Status Header Banner */}
-          <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-[#111827] pb-4">
+          <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b-2 border-[#111827] pb-3 sm:pb-4">
               <div>
-                <span className="font-pixel text-[10px] text-gray-500 uppercase">SQUAD REGISTRATION CODE</span>
-                <div className="font-pixel text-xl sm:text-2xl text-[#E5005A] font-bold">
+                <span className="font-pixel text-[9px] sm:text-[10px] text-gray-500 uppercase">SQUAD REGISTRATION CODE</span>
+                <div className="font-pixel text-lg sm:text-2xl text-[#E5005A] font-bold">
                   {registration.registrationId}
                 </div>
-                <h2 className="font-arcade text-lg sm:text-xl text-[#111827] font-bold mt-1">
+                <h2 className="font-arcade text-base sm:text-xl text-[#111827] font-bold mt-0.5">
                   {registration.teamName}
                 </h2>
               </div>
 
               {/* Status Badges */}
-              <div className="flex flex-wrap gap-2">
-                <div className="text-right">
-                  <span className="text-[10px] font-pixel block text-gray-500">REGISTRATION STATUS</span>
-                  <span className={`inline-block font-pixel text-xs px-2.5 py-1 border-2 border-[#111827] ${
+              <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3">
+                <div className="text-left sm:text-right">
+                  <span className="text-[9px] sm:text-[10px] font-pixel block text-gray-500">REGISTRATION</span>
+                  <span className={`inline-block font-pixel text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 border border-[#111827] ${
                     isConfirmed ? 'bg-[#4CAF50] text-white' : 'bg-[#F4C430] text-[#111827]'
                   }`}>
                     {registration.status}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-pixel block text-gray-500">PAYMENT STATUS</span>
-                  <span className={`inline-block font-pixel text-xs px-2.5 py-1 border-2 border-[#111827] ${
+                  <span className="text-[9px] sm:text-[10px] font-pixel block text-gray-500">PAYMENT</span>
+                  <span className={`inline-block font-pixel text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 border border-[#111827] ${
                     registration.payment?.status === 'PAID'
                       ? 'bg-[#4CAF50] text-white'
                       : isPendingVerification
@@ -303,17 +303,17 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
             </div>
 
             {/* Event Quick Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-body pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs font-body pt-1">
               <div className="flex items-center gap-2 p-2.5 bg-[#F7E8B5] border-2 border-[#111827]">
-                <Calendar className="w-4 h-4 text-[#E5005A]" />
-                <span>{EVENT_CONFIG.eventDateDisplay}</span>
+                <Calendar className="w-4 h-4 text-[#E5005A] shrink-0" />
+                <span className="truncate">{EVENT_CONFIG.eventDateDisplay}</span>
               </div>
               <div className="flex items-center gap-2 p-2.5 bg-[#F7E8B5] border-2 border-[#111827]">
-                <MapPin className="w-4 h-4 text-[#00AFC6]" />
-                <span>{EVENT_CONFIG.venue}</span>
+                <MapPin className="w-4 h-4 text-[#00AFC6] shrink-0" />
+                <span className="truncate">{EVENT_CONFIG.venue}</span>
               </div>
               <div className="flex items-center gap-2 p-2.5 bg-[#F7E8B5] border-2 border-[#111827]">
-                <Users className="w-4 h-4 text-[#4CAF50]" />
+                <Users className="w-4 h-4 text-[#4CAF50] shrink-0" />
                 <span>{registration.players?.length || 5} Players Squad</span>
               </div>
             </div>
@@ -323,13 +323,13 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
           {/* CASE A: CONFIRMED PASS & QR TICKET */}
           {/* ---------------------------------------------------- */}
           {isConfirmed && (
-            <div className="bg-[#111827] text-white border-4 border-[#111827] shadow-[6px_6px_0_0_#4CAF50] p-6 sm:p-8 space-y-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-gray-700 pb-6">
+            <div className="bg-[#111827] text-white border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#4CAF50] sm:shadow-[6px_6px_0_0_#4CAF50] p-4 sm:p-8 space-y-5 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6 border-b border-gray-700 pb-5 sm:pb-6">
                 <div className="space-y-2 text-center sm:text-left">
-                  <span className="bg-[#4CAF50] text-white font-pixel text-xs px-3 py-1 border border-white inline-block">
+                  <span className="bg-[#4CAF50] text-white font-pixel text-[10px] sm:text-xs px-2.5 sm:px-3 py-1 border border-white inline-block">
                     ✓ ACCESS GRANTED • ROOM 318
                   </span>
-                  <h3 className="font-pixel text-xl sm:text-2xl text-[#F7E8B5]">
+                  <h3 className="font-pixel text-lg sm:text-2xl text-[#F7E8B5]">
                     OFFICIAL TOURNAMENT ENTRY PASS
                   </h3>
                   <p className="text-xs text-gray-300 font-body max-w-md">
@@ -338,16 +338,16 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                 </div>
 
                 {/* QR Ticket */}
-                <div className="bg-white border-4 border-[#F4C430] p-3 shadow-[4px_4px_0_0_#000] flex flex-col items-center shrink-0">
+                <div className="bg-white border-3 sm:border-4 border-[#F4C430] p-2.5 sm:p-3 shadow-[3px_3px_0_0_#000] flex flex-col items-center shrink-0">
                   {registration.ticket?.qrDataUrl ? (
                     <img
                       src={registration.ticket.qrDataUrl}
                       alt="DECEPTION Entry QR Pass"
-                      className="w-36 h-36"
+                      className="w-32 h-32 sm:w-36 sm:h-36"
                     />
                   ) : (
-                    <div className="w-36 h-36 bg-gray-100 flex items-center justify-center">
-                      <QrCode className="w-24 h-24 text-gray-800" />
+                    <div className="w-32 h-32 sm:w-36 sm:h-36 bg-gray-100 flex items-center justify-center">
+                      <QrCode className="w-20 h-20 sm:w-24 sm:h-24 text-gray-800" />
                     </div>
                   )}
                   <span className="text-[9px] font-mono text-[#111827] font-bold mt-1">
@@ -357,18 +357,18 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                 <button
                   onClick={downloadCombinedPdf}
-                  className="bg-[#00AFC6] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-white shadow-[3px_3px_0_0_#FFF] hover:bg-white transition-all flex items-center gap-2"
+                  className="w-full sm:w-auto bg-[#00AFC6] text-[#111827] font-arcade text-xs px-4 sm:px-5 py-3 border-2 border-white shadow-[2px_2px_0_0_#FFF] hover:bg-white transition-all flex items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4" /> DOWNLOAD COMBINED PDF PASS & RECEIPT
+                  <Download className="w-4 h-4 shrink-0" /> DOWNLOAD PASS & RECEIPT (PDF)
                 </button>
                 <button
                   onClick={() => setShowEmailModal(true)}
-                  className="bg-[#F4C430] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-white shadow-[3px_3px_0_0_#FFF] hover:bg-white transition-all flex items-center gap-2"
+                  className="w-full sm:w-auto bg-[#F4C430] text-[#111827] font-arcade text-xs px-4 sm:px-5 py-3 border-2 border-white shadow-[2px_2px_0_0_#FFF] hover:bg-white transition-all flex items-center justify-center gap-2"
                 >
-                  <Mail className="w-4 h-4" /> VIEW IN-APP EMAIL DISPATCH
+                  <Mail className="w-4 h-4 shrink-0" /> VIEW EMAIL DISPATCH
                 </button>
               </div>
             </div>
@@ -378,20 +378,20 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
           {/* CASE B: PAYMENT PENDING VERIFICATION */}
           {/* ---------------------------------------------------- */}
           {isPendingVerification && (
-            <div className="bg-[#FFFDF0] border-4 border-[#00AFC6] shadow-[6px_6px_0_0_#111827] p-6 space-y-4">
+            <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#00AFC6] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <Clock className="w-6 h-6 text-[#00AFC6] animate-spin" />
-                <h3 className="font-arcade text-base font-bold text-[#111827]">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#00AFC6] animate-spin shrink-0" />
+                <h3 className="font-arcade text-sm sm:text-base font-bold text-[#111827]">
                   UNDER VERIFICATION BY ADG DESK
                 </h3>
               </div>
               <p className="text-xs sm:text-sm font-body text-[#111827]/90 leading-relaxed">
-                Your manual UPI transfer proof has been recorded. Reference UTR: <strong className="font-mono bg-[#F7E8B5] px-1">{registration.payment?.transactionReference}</strong>. An organizer will approve your payment shortly. You can re-check this page anytime.
+                Your manual UPI transfer proof has been recorded. Reference UTR: <strong className="font-mono bg-[#F7E8B5] px-1 break-all">{registration.payment?.transactionReference}</strong>. An organizer will approve your payment shortly. You can re-check this page anytime.
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => loadRegistration(registration.registrationId)}
-                  className="bg-[#00AFC6] text-[#111827] font-arcade text-xs px-4 py-2 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]"
+                  className="w-full sm:w-auto bg-[#00AFC6] text-[#111827] font-arcade text-xs px-4 py-2.5 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]"
                 >
                   REFRESH STATUS
                 </button>
@@ -403,10 +403,10 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
           {/* CASE C: PAYMENT NOT STARTED / PENDING */}
           {/* ---------------------------------------------------- */}
           {isPaymentPending && (
-            <div className="bg-[#F7E8B5] border-4 border-[#E5005A] shadow-[6px_6px_0_0_#111827] p-6 space-y-4">
+            <div className="bg-[#F7E8B5] border-3 sm:border-4 border-[#E5005A] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-6 h-6 text-[#E5005A]" />
-                <h3 className="font-arcade text-base font-bold text-[#111827]">
+                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-[#E5005A] shrink-0" />
+                <h3 className="font-arcade text-sm sm:text-base font-bold text-[#111827]">
                   PAYMENT PENDING (₹500)
                 </h3>
               </div>
@@ -415,51 +415,62 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
               </p>
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="bg-[#E5005A] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center gap-2 hover:bg-[#111827]"
+                className="w-full sm:w-auto bg-[#E5005A] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#111827]"
               >
-                <CreditCard className="w-4 h-4" /> COMPLETE SQUAD PAYMENT (₹500)
+                <CreditCard className="w-4 h-4 shrink-0" /> COMPLETE SQUAD PAYMENT (₹500)
               </button>
             </div>
           )}
 
           {/* Roster & Verified Identity Cards */}
-          <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 space-y-4">
-            <h3 className="font-arcade text-base font-bold text-[#111827] border-b-2 border-[#111827] pb-2">
+          <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-6 space-y-4">
+            <h3 className="font-arcade text-sm sm:text-base font-bold text-[#111827] border-b-2 border-[#111827] pb-2">
               SQUAD ROSTER & COLLEGE IDENTITY CARDS
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {registration.players?.map((p: any, idx: number) => (
-                <div
-                  key={idx}
-                  className="p-4 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] space-y-2 text-xs font-body"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-pixel text-[10px] text-[#E5005A]">0{idx + 1}</span>
-                    {idx === 0 && (
-                      <span className="bg-[#111827] text-white font-pixel text-[8px] px-1.5 py-0.5">
-                        LEADER
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              {registration.players?.map((p: any, idx: number) => {
+                const isSfit = p.isSfit !== false && (!p.college || p.college.includes('SFIT') || p.college.includes('St. Francis'));
+                return (
+                  <div
+                    key={idx}
+                    className="p-3 sm:p-4 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] space-y-2 text-xs font-body"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-pixel text-[10px] text-[#E5005A]">0{idx + 1}</span>
+                        {idx === 0 && (
+                          <span className="bg-[#111827] text-white font-pixel text-[8px] px-1.5 py-0.5">
+                            LEADER
+                          </span>
+                        )}
+                      </div>
+                      <span className={`font-pixel text-[8px] px-1.5 py-0.5 border border-[#111827] ${
+                        isSfit ? 'bg-[#F4C430] text-[#111827]' : 'bg-[#00AFC6] text-white'
+                      }`}>
+                        {isSfit ? 'SFIT' : 'NON-SFIT'}
                       </span>
+                    </div>
+                    <div className="font-bold text-[#111827] truncate">{p.fullName}</div>
+                    <div className="text-gray-700 text-[10px] font-arcade truncate">{isSfit ? 'SFIT' : (p.college || 'External College')}</div>
+                    <div className="text-gray-600 font-mono text-[10px]">{p.studentId}</div>
+                    <div className="text-[#00AFC6] font-mono text-[10px] truncate">{p.email}</div>
+                    <div className="text-gray-700 text-[11px]">{p.branch} • {p.year}</div>
+
+                    {p.idCardUrl && (
+                      <div className="pt-1.5">
+                        <div className="w-full h-24 border border-[#111827] bg-white overflow-hidden">
+                          <img
+                            src={p.idCardUrl}
+                            alt={`ID Card ${p.fullName}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <div className="font-bold text-[#111827] truncate">{p.fullName}</div>
-                  <div className="text-gray-600 font-mono text-[11px]">{p.studentId}</div>
-                  <div className="text-[#00AFC6] font-mono text-[11px] truncate">{p.email}</div>
-                  <div className="text-gray-700">{p.branch} • {p.year}</div>
-
-                  {p.idCardUrl && (
-                    <div className="pt-2">
-                      <div className="w-full h-24 border border-[#111827] bg-white overflow-hidden">
-                        <img
-                          src={p.idCardUrl}
-                          alt={`ID Card ${p.fullName}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

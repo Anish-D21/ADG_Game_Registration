@@ -35,17 +35,17 @@ export const AmongUsIllustration: React.FC<IllustrationProps> = ({ onRegisterCli
             </div>
           </div>
 
-          <h1 className="font-pixel text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-widest text-[#E5005A] drop-shadow-[4px_4px_0px_#111827] uppercase">
+          <h1 className="font-pixel text-2xl xs:text-3xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider sm:tracking-widest text-[#E5005A] drop-shadow-[3px_3px_0px_#111827] sm:drop-shadow-[4px_4px_0px_#111827] uppercase">
             DECEPTION
           </h1>
         </div>
 
         {/* Date & Collaboration Pills */}
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-1">
-          <span className="bg-[#00AFC6] text-white font-pixel text-xs sm:text-sm px-4 py-2 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827]">
+          <span className="bg-[#00AFC6] text-white font-pixel text-[10px] sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827]">
             {EVENT_CONFIG.eventDateDisplay}
           </span>
-          <span className="bg-[#FFFDF0] text-[#111827] font-arcade text-xs sm:text-sm px-3 py-1.5 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]">
+          <span className="bg-[#FFFDF0] text-[#111827] font-arcade text-xs sm:text-sm px-2.5 sm:px-3 py-1 sm:py-1.5 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]">
             <span className="text-[#4CAF50] font-bold">ADG</span> x <span className="text-[#E5005A] font-bold">MosAIC</span>
           </span>
         </div>
@@ -244,30 +244,30 @@ export const AmongUsIllustration: React.FC<IllustrationProps> = ({ onRegisterCli
       {/* ---------------------------------------------------- */}
       {/* 4. POSTER MOTIFS: TRUST NO ONE & ROOM 318 */}
       {/* ---------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 my-6">
-        <div className="bg-[#00AFC6] text-white font-pixel text-sm sm:text-base px-6 py-2.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] tracking-widest uppercase">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 my-6">
+        <div className="w-full sm:w-auto text-center bg-[#00AFC6] text-white font-pixel text-xs sm:text-base px-4 sm:px-6 py-2 sm:py-2.5 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] tracking-normal sm:tracking-widest uppercase">
           {EVENT_CONFIG.warningQuote}
         </div>
-        <div className="bg-[#FFFDF0] text-[#111827] font-pixel text-xs sm:text-sm px-5 py-2.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] tracking-wider font-bold">
+        <div className="w-full sm:w-auto text-center bg-[#FFFDF0] text-[#111827] font-pixel text-[11px] sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] tracking-normal sm:tracking-wider font-bold">
           VENUE: {EVENT_CONFIG.venue}
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 mt-6">
         {onRegisterClick && (
           <button
             onClick={onRegisterClick}
-            className="bg-[#E5005A] text-white font-arcade text-sm sm:text-base px-8 py-3.5 border-3 border-[#111827] shadow-[5px_5px_0_0_#111827] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[7px_7px_0_0_#111827] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_#111827] flex items-center gap-2"
+            className="w-full sm:w-auto bg-[#E5005A] text-white font-arcade text-xs sm:text-base px-6 sm:px-8 py-3.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[5px_5px_0_0_#111827] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[7px_7px_0_0_#111827] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_#111827] flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-5 h-5" />
-            REGISTER YOUR SQUAD (5–6 PLAYERS)
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span>REGISTER YOUR SQUAD (5–6 PLAYERS)</span>
           </button>
         )}
         {onExploreClick && (
           <button
             onClick={onExploreClick}
-            className="bg-[#F4C430] text-[#111827] font-arcade text-sm sm:text-base px-6 py-3.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0_0_#111827] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_0_#111827]"
+            className="w-full sm:w-auto bg-[#F4C430] text-[#111827] font-arcade text-xs sm:text-base px-5 sm:px-6 py-3.5 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0_0_#111827] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_0_#111827] text-center"
           >
             EXPLORE GAME RULES
           </button>

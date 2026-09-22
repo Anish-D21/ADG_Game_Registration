@@ -371,31 +371,74 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">
       {/* Title Header */}
-      <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-6 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <span className="bg-[#E5005A] text-white font-pixel text-xs px-2.5 py-1 border-2 border-[#111827]">
+          <span className="bg-[#E5005A] text-white font-pixel text-[10px] sm:text-xs px-2.5 py-0.5 sm:py-1 border-2 border-[#111827] inline-block">
             ROOM 318 ENTRANCE
           </span>
-          <h1 className="font-pixel text-2xl sm:text-3xl text-[#111827] mt-2 tracking-wider">
+          <h1 className="font-pixel text-xl sm:text-3xl text-[#111827] mt-2 tracking-wider">
             SQUAD REGISTRATION
           </h1>
           <p className="text-xs sm:text-sm font-body text-[#111827]/80 mt-1">
             Official pass registration for DECEPTION • Strict 5 or 6 SFIT players
           </p>
         </div>
-        <div className="bg-[#00AFC6] text-white font-pixel text-xs px-4 py-2 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] text-center">
+        <div className="w-full sm:w-auto bg-[#00AFC6] text-white font-pixel text-xs px-3.5 sm:px-4 py-2 border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex sm:flex-col items-center justify-between sm:justify-center text-center shrink-0">
           <div>ENTRY FEE</div>
           <div className="text-base font-bold">{money(payCfg.perHeadAmount)} / PLAYER</div>
         </div>
       </div>
 
       {/* Visual Stepper */}
-      <div className="bg-[#FFFDF0] border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] p-4 overflow-x-auto">
-        <div className="flex items-center justify-between min-w-[500px]">
+      <div className="bg-[#FFFDF0] border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] p-3 sm:p-4">
+        {/* Mobile View (< sm): Non-overflowing 5-node tracker + active step banner */}
+        <div className="block sm:hidden">
+          <div className="flex items-center justify-between relative px-1">
+            {steps.map((s, idx) => {
+              const isDone = currentStep > s.num;
+              const isCurrent = currentStep === s.num;
+
+              return (
+                <React.Fragment key={s.num}>
+                  <div
+                    className={`w-7 h-7 border-2 border-[#111827] flex items-center justify-center font-pixel text-[10px] z-10 transition-all ${
+                      isDone
+                        ? 'bg-[#4CAF50] text-white shadow-[1px_1px_0_0_#111827]'
+                        : isCurrent
+                        ? 'bg-[#E5005A] text-white shadow-[2px_2px_0_0_#111827] scale-105 font-bold'
+                        : 'bg-[#F7E8B5] text-[#111827]'
+                    }`}
+                  >
+                    {isDone ? '✓' : s.num}
+                  </div>
+                  {idx < steps.length - 1 && (
+                    <div
+                      className={`h-0.5 flex-1 border-t-2 ${
+                        currentStep > idx + 1 ? 'border-[#4CAF50]' : 'border-dashed border-[#111827]'
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+          {/* Active step descriptor for mobile */}
+          <div className="mt-2.5 pt-2 border-t border-[#111827]/20 flex items-center justify-between text-xs">
+            <span className="font-arcade text-[#E5005A] font-bold flex items-center gap-1.5">
+              <span>STEP {currentStep} OF 5:</span>
+              <span className="text-[#111827]">{steps[currentStep - 1]?.title}</span>
+            </span>
+            <span className="font-pixel text-[9px] bg-[#111827] text-white px-1.5 py-0.5">
+              {Math.round(((currentStep - 1) / 4) * 100)}%
+            </span>
+          </div>
+        </div>
+
+        {/* Tablet & Desktop View (>= sm): Full step nodes with icons */}
+        <div className="hidden sm:flex items-center justify-between">
           {steps.map((s, idx) => {
-            const Icon = s.icon;
             const isDone = currentStep > s.num;
             const isCurrent = currentStep === s.num;
 
@@ -413,7 +456,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                   >
                     {isDone ? '✓' : s.num}
                   </div>
-                  <div className="hidden sm:block">
+                  <div>
                     <span className={`block font-arcade text-xs ${isCurrent ? 'font-bold text-[#111827]' : 'text-gray-600'}`}>
                       {s.title}
                     </span>
@@ -430,8 +473,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
       {/* Error Alert Display */}
       {errorMsg && (
-        <div className="p-4 bg-[#E5005A] text-white border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
-          <AlertCircle className="w-6 h-6 shrink-0 text-[#F4C430]" />
+        <div className="p-3.5 sm:p-4 bg-[#E5005A] text-white border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-[#F4C430]" />
           <div className="text-xs sm:text-sm font-arcade tracking-wide leading-relaxed">
             {errorMsg}
           </div>
@@ -442,9 +485,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       {/* STEP 1: TEAM CONFIGURATION */}
       {/* ---------------------------------------------------- */}
       {currentStep === 1 && (
-        <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 sm:p-8 space-y-6">
+        <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8 space-y-5 sm:space-y-6">
           <div className="border-b-2 border-[#111827] pb-3">
-            <h2 className="font-arcade text-xl text-[#111827] font-bold">
+            <h2 className="font-arcade text-lg sm:text-xl text-[#111827] font-bold">
               STEP 1: SQUAD DETAILS
             </h2>
             <p className="text-xs font-body text-[#111827]/80">
@@ -462,7 +505,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 value={teamName}
                 onChange={(e) => { setTeamName(e.target.value); setErrorMsg(null); }}
                 placeholder="e.g. The Suspects, Room 318 Crew, Binary Imposters"
-                className="w-full px-4 py-3 bg-[#FFFDF0] border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] font-body text-sm focus:outline-none focus:bg-[#FFF]"
+                className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] font-body text-xs sm:text-sm focus:outline-none focus:bg-[#FFF]"
               />
             </div>
 
@@ -470,36 +513,36 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <label className="block font-arcade text-xs font-bold text-[#111827] mb-2 uppercase tracking-wider">
                 Strict Squad Size (Min 5, Max 6) *
               </label>
-              <div className="grid grid-cols-2 gap-4 max-w-md">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md">
                 <button
                   type="button"
                   onClick={() => handleTeamSizeChange(5)}
-                  className={`p-4 border-3 border-[#111827] text-left transition-all ${
+                  className={`p-3 sm:p-4 border-2 sm:border-3 border-[#111827] text-left transition-all ${
                     teamSize === 5
-                      ? 'bg-[#00AFC6] text-white shadow-[4px_4px_0_0_#111827]'
+                      ? 'bg-[#00AFC6] text-white shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827]'
                       : 'bg-[#F7E8B5] text-[#111827] hover:bg-[#FFFDF0]'
                   }`}
                 >
-                  <div className="font-pixel text-xl mb-1">5 PLAYERS</div>
-                  <div className="text-xs font-body opacity-90">1 Leader + 4 Crewmates</div>
+                  <div className="font-pixel text-sm sm:text-xl mb-1">5 PLAYERS</div>
+                  <div className="text-[11px] sm:text-xs font-body opacity-90">1 Leader + 4 Crewmates</div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleTeamSizeChange(6)}
-                  className={`p-4 border-3 border-[#111827] text-left transition-all ${
+                  className={`p-3 sm:p-4 border-2 sm:border-3 border-[#111827] text-left transition-all ${
                     teamSize === 6
-                      ? 'bg-[#E5005A] text-white shadow-[4px_4px_0_0_#111827]'
+                      ? 'bg-[#E5005A] text-white shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827]'
                       : 'bg-[#F7E8B5] text-[#111827] hover:bg-[#FFFDF0]'
                   }`}
                 >
-                  <div className="font-pixel text-xl mb-1">6 PLAYERS</div>
-                  <div className="text-xs font-body opacity-90">1 Leader + 5 Crewmates</div>
+                  <div className="font-pixel text-sm sm:text-xl mb-1">6 PLAYERS</div>
+                  <div className="text-[11px] sm:text-xs font-body opacity-90">1 Leader + 5 Crewmates</div>
                 </button>
               </div>
             </div>
 
-            <div className="p-4 bg-[#F7E8B5] border-2 border-[#111827] text-xs font-body space-y-1">
+            <div className="p-3.5 sm:p-4 bg-[#F7E8B5] border-2 border-[#111827] text-xs font-body space-y-1">
               <strong className="font-arcade text-[#E5005A] block">Important Note on Eligibility:</strong>
               <p>• Both SFIT and Non-SFIT students are eligible to register and participate.</p>
               <p>• In the next step, select whether each player is an <strong>SFIT Student</strong> (requires @student.sfit.ac.in email) or a <strong>Non-SFIT Student</strong> (any email accepted).</p>
@@ -507,12 +550,12 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-3 sm:pt-4">
             <button
               onClick={nextStep}
-              className="bg-[#111827] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#E5005A] flex items-center gap-2 hover:bg-[#E5005A] transition-colors"
+              className="w-full sm:w-auto bg-[#111827] text-white font-arcade text-xs sm:text-sm px-6 py-3.5 border-2 border-[#111827] shadow-[3px_3px_0_0_#E5005A] flex items-center justify-center gap-2 hover:bg-[#E5005A] transition-colors"
             >
-              PROCEED TO PLAYER DETAILS <ArrowRight className="w-4 h-4" />
+              <span>PROCEED TO PLAYER DETAILS</span> <ArrowRight className="w-4 h-4 shrink-0" />
             </button>
           </div>
         </div>
@@ -522,10 +565,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       {/* STEP 2: PLAYER DETAILS */}
       {/* ---------------------------------------------------- */}
       {currentStep === 2 && (
-        <div className="space-y-6">
-          <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 sm:p-8">
-            <div className="border-b-2 border-[#111827] pb-3 mb-6">
-              <h2 className="font-arcade text-xl text-[#111827] font-bold">
+        <div className="space-y-5 sm:space-y-6">
+          <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8">
+            <div className="border-b-2 border-[#111827] pb-3 mb-4 sm:mb-6">
+              <h2 className="font-arcade text-lg sm:text-xl text-[#111827] font-bold">
                 STEP 2: ROSTER DETAILS ({players.length} PLAYERS)
               </h2>
               <p className="text-xs font-body text-[#111827]/80">
@@ -533,7 +576,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {players.map((p, idx) => {
                 const isLeader = idx === 0;
                 const sfitEmailValid = isSfitEmail(p.email);
@@ -542,25 +585,25 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 return (
                   <div
                     key={idx}
-                    className="p-5 border-3 border-[#111827] bg-[#F7E8B5]/60 shadow-[4px_4px_0_0_#111827] space-y-4"
+                    className="p-3.5 sm:p-5 border-2 sm:border-3 border-[#111827] bg-[#F7E8B5]/60 shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] space-y-3 sm:space-y-4"
                   >
                     {/* Header bar with Player #, Leader Tag, and Status */}
                     <div className="flex items-center justify-between border-b border-[#111827] pb-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 bg-[#111827] text-white font-pixel text-xs flex items-center justify-center">
+                        <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#111827] text-white font-pixel text-[10px] sm:text-xs flex items-center justify-center shrink-0">
                           0{idx + 1}
                         </span>
-                        <h3 className="font-arcade text-sm font-bold text-[#111827]">
-                          {isLeader ? 'PLAYER 01 (TEAM LEADER / PRIMARY CONTACT)' : `PLAYER 0${idx + 1}`}
+                        <h3 className="font-arcade text-xs sm:text-sm font-bold text-[#111827] truncate">
+                          {isLeader ? 'PLAYER 01 (LEADER)' : `PLAYER 0${idx + 1}`}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         {isLeader && (
-                          <span className="bg-[#E5005A] text-white font-pixel text-[10px] px-2 py-0.5 border border-[#111827]">
+                          <span className="bg-[#E5005A] text-white font-pixel text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 border border-[#111827]">
                             LEADER
                           </span>
                         )}
-                        <span className={`font-pixel text-[10px] px-2 py-0.5 border border-[#111827] ${
+                        <span className={`font-pixel text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 border border-[#111827] ${
                           p.isSfit ? 'bg-[#F4C430] text-[#111827]' : 'bg-[#00AFC6] text-white'
                         }`}>
                           {p.isSfit ? 'SFIT' : 'NON-SFIT'}
@@ -569,40 +612,40 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                     </div>
 
                     {/* Dedicated Per-Student Option: SFIT Student vs Non-SFIT Student */}
-                    <div className="p-3.5 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] space-y-2">
+                    <div className="p-3 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] space-y-2">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <label className="font-arcade text-xs font-bold text-[#111827] flex items-center gap-1.5">
-                          <GraduationCap className="w-4 h-4 text-[#E5005A]" />
-                          COLLEGE / INSTITUTION SELECTION FOR PLAYER 0{idx + 1} *
+                          <GraduationCap className="w-4 h-4 text-[#E5005A] shrink-0" />
+                          COLLEGE SELECTION FOR PLAYER 0{idx + 1} *
                         </label>
                         <span className="text-[10px] font-body text-gray-600">
-                          Choose before entering email address
+                          Select before entering email address
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                         {/* Option 1: SFIT Student */}
                         <button
                           type="button"
                           onClick={() => setPlayerCollegeType(idx, true)}
-                          className={`p-3 border-2 border-[#111827] text-left transition-all flex items-start gap-3 ${
+                          className={`p-2.5 sm:p-3 border-2 border-[#111827] text-left transition-all flex items-start gap-2.5 ${
                             p.isSfit
-                              ? 'bg-[#F4C430] text-[#111827] shadow-[3px_3px_0_0_#111827]'
+                              ? 'bg-[#F4C430] text-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827]'
                               : 'bg-white text-gray-700 hover:bg-[#F7E8B5]'
                           }`}
                         >
-                          <div className={`w-5 h-5 rounded-full border-2 border-[#111827] flex items-center justify-center shrink-0 mt-0.5 ${
+                          <div className={`w-4 h-4 rounded-full border-2 border-[#111827] flex items-center justify-center shrink-0 mt-0.5 ${
                             p.isSfit ? 'bg-[#111827]' : 'bg-white'
                           }`}>
-                            {p.isSfit && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                            {p.isSfit && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-arcade text-xs font-bold text-[#111827] flex items-center gap-1.5">
                               SFIT Student
-                              {p.isSfit && <span className="bg-[#111827] text-white font-pixel text-[9px] px-1.5 py-0.2">SELECTED</span>}
+                              {p.isSfit && <span className="bg-[#111827] text-white font-pixel text-[8px] px-1 py-0.2">ACTIVE</span>}
                             </div>
-                            <div className="text-[11px] font-body text-gray-700 mt-0.5">
-                              St. Francis Institute of Technology • <strong>Only @student.sfit.ac.in email</strong>
+                            <div className="text-[10px] sm:text-[11px] font-body text-gray-700 mt-0.5 leading-snug">
+                              St. Francis Inst. of Tech • <strong>@student.sfit.ac.in email only</strong>
                             </div>
                           </div>
                         </button>
@@ -611,31 +654,31 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                         <button
                           type="button"
                           onClick={() => setPlayerCollegeType(idx, false)}
-                          className={`p-3 border-2 border-[#111827] text-left transition-all flex items-start gap-3 ${
+                          className={`p-2.5 sm:p-3 border-2 border-[#111827] text-left transition-all flex items-start gap-2.5 ${
                             !p.isSfit
-                              ? 'bg-[#00AFC6] text-white shadow-[3px_3px_0_0_#111827]'
+                              ? 'bg-[#00AFC6] text-white shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827]'
                               : 'bg-white text-gray-700 hover:bg-[#F7E8B5]'
                           }`}
                         >
-                          <div className={`w-5 h-5 rounded-full border-2 border-[#111827] flex items-center justify-center shrink-0 mt-0.5 ${
+                          <div className={`w-4 h-4 rounded-full border-2 border-[#111827] flex items-center justify-center shrink-0 mt-0.5 ${
                             !p.isSfit ? 'bg-[#111827]' : 'bg-white'
                           }`}>
-                            {!p.isSfit && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                            {!p.isSfit && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className={`font-arcade text-xs font-bold flex items-center gap-1.5 ${!p.isSfit ? 'text-white' : 'text-[#111827]'}`}>
                               Non-SFIT Student
-                              {!p.isSfit && <span className="bg-[#111827] text-[#00AFC6] font-pixel text-[9px] px-1.5 py-0.2">SELECTED</span>}
+                              {!p.isSfit && <span className="bg-[#111827] text-[#00AFC6] font-pixel text-[8px] px-1 py-0.2">ACTIVE</span>}
                             </div>
-                            <div className={`text-[11px] font-body mt-0.5 ${!p.isSfit ? 'text-white/90' : 'text-gray-700'}`}>
-                              External College / Institute • <strong>Any email works (Gmail, Yahoo, etc.)</strong>
+                            <div className={`text-[10px] sm:text-[11px] font-body mt-0.5 leading-snug ${!p.isSfit ? 'text-white/90' : 'text-gray-700'}`}>
+                              External College • <strong>Any email accepted (Gmail, Yahoo, etc.)</strong>
                             </div>
                           </div>
                         </button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs font-body">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-xs font-body">
                       {/* Full Name */}
                       <div>
                         <label className="block font-arcade text-[11px] font-bold text-[#111827] mb-1">
@@ -650,7 +693,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                         />
                       </div>
 
-                      {/* College / Institute Name (Input for Non-SFIT, fixed badge for SFIT) */}
+                      {/* College / Institute Name */}
                       {!p.isSfit ? (
                         <div>
                           <label className="block font-arcade text-[11px] font-bold text-[#111827] mb-1">
@@ -660,7 +703,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                             type="text"
                             value={p.college}
                             onChange={(e) => updatePlayerField(idx, 'college', e.target.value)}
-                            placeholder="e.g. VJTI, DJ Sanghvi, NMIMS, etc."
+                            placeholder="e.g. VJTI, DJ Sanghvi, NMIMS"
                             className="w-full px-3 py-2 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] text-xs focus:outline-none"
                           />
                         </div>
@@ -673,7 +716,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                             type="text"
                             disabled
                             value="St. Francis Institute of Technology (SFIT)"
-                            className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] text-xs font-arcade text-gray-700 cursor-not-allowed"
+                            className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] text-xs font-arcade text-gray-700 cursor-not-allowed truncate"
                           />
                         </div>
                       )}
@@ -696,10 +739,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="font-arcade text-[11px] font-bold text-[#111827]">
-                            {p.isSfit ? 'SFIT Email Address *' : 'Email Address (Any Email) *'}
+                            {p.isSfit ? 'SFIT Email *' : 'Email (Any) *'}
                           </label>
                           {p.email && (
-                            <span className={`text-[10px] font-pixel ${
+                            <span className={`text-[9px] font-pixel ${
                               p.isSfit 
                                 ? (sfitEmailValid ? 'text-[#2E7D32]' : 'text-[#E5005A]')
                                 : (generalEmailValid ? 'text-[#2E7D32]' : 'text-[#E5005A]')
@@ -714,7 +757,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                           type="email"
                           value={p.email}
                           onChange={(e) => updatePlayerField(idx, 'email', e.target.value)}
-                          placeholder={p.isSfit ? "name@student.sfit.ac.in" : "e.g. yourname@gmail.com"}
+                          placeholder={p.isSfit ? "name@student.sfit.ac.in" : "e.g. name@gmail.com"}
                           className={`w-full px-3 py-2 bg-[#FFFDF0] border-2 ${
                             p.email && (p.isSfit ? !sfitEmailValid : !generalEmailValid)
                               ? 'border-[#E5005A]'
@@ -724,7 +767,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                         <span className="text-[10px] text-gray-500 font-body block mt-0.5">
                           {p.isSfit 
                             ? 'Must end with @student.sfit.ac.in'
-                            : 'Any email works (Gmail, Outlook, personal, etc.)'}
+                            : 'Any valid email address'}
                         </span>
                       </div>
 
@@ -780,18 +823,18 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               })}
             </div>
 
-            <div className="flex items-center justify-between pt-6">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6">
               <button
                 onClick={prevStep}
-                className="bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center gap-2 hover:bg-[#F7E8B5]"
+                className="w-full sm:w-auto bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#F7E8B5]"
               >
-                <ArrowLeft className="w-4 h-4" /> BACK
+                <ArrowLeft className="w-4 h-4 shrink-0" /> BACK
               </button>
               <button
                 onClick={nextStep}
-                className="bg-[#111827] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#E5005A] flex items-center gap-2 hover:bg-[#E5005A] transition-colors"
+                className="w-full sm:w-auto bg-[#111827] text-white font-arcade text-xs sm:text-sm px-6 py-3.5 border-2 border-[#111827] shadow-[3px_3px_0_0_#E5005A] flex items-center justify-center gap-2 hover:bg-[#E5005A] transition-colors"
               >
-                CONTINUE TO ID CARD UPLOAD <ArrowRight className="w-4 h-4" />
+                <span>CONTINUE TO ID CARD UPLOAD</span> <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
             </div>
           </div>
@@ -802,9 +845,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       {/* STEP 3: COLLEGE ID CARD UPLOADS */}
       {/* ---------------------------------------------------- */}
       {currentStep === 3 && (
-        <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 sm:p-8 space-y-6">
+        <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8 space-y-5 sm:space-y-6">
           <div className="border-b-2 border-[#111827] pb-3">
-            <h2 className="font-arcade text-xl text-[#111827] font-bold">
+            <h2 className="font-arcade text-lg sm:text-xl text-[#111827] font-bold">
               STEP 3: COLLEGE IDENTITY CARD UPLOADS
             </h2>
             <p className="text-xs font-body text-[#111827]/80">
@@ -812,33 +855,33 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {players.map((p, idx) => (
               <div
                 key={idx}
-                className="border-3 border-[#111827] bg-[#F7E8B5] p-4 shadow-[3px_3px_0_0_#111827] space-y-3"
+                className="border-2 sm:border-3 border-[#111827] bg-[#F7E8B5] p-3.5 sm:p-4 shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-arcade text-xs font-bold text-[#111827] block">
+                  <div className="min-w-0 pr-2">
+                    <span className="font-arcade text-xs font-bold text-[#111827] block truncate">
                       0{idx + 1}. {p.fullName || `Player ${idx + 1}`}
                     </span>
-                    <span className="text-[10px] font-body text-gray-700">
+                    <span className="text-[10px] font-body text-gray-700 block truncate">
                       {p.isSfit ? 'SFIT Student' : (p.college || 'Non-SFIT')}
                     </span>
                   </div>
                   {p.idCardUrl ? (
-                    <span className="text-[#2E7D32] text-[10px] font-pixel flex items-center gap-1">
+                    <span className="text-[#2E7D32] text-[10px] font-pixel flex items-center gap-1 shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5" /> UPLOADED
                     </span>
                   ) : (
-                    <span className="text-[#E5005A] text-[10px] font-pixel">REQUIRED</span>
+                    <span className="text-[#E5005A] text-[10px] font-pixel shrink-0">REQUIRED</span>
                   )}
                 </div>
 
                 {p.idCardUrl ? (
                   <div className="space-y-2">
-                    <div className="w-full h-32 border-2 border-[#111827] bg-white overflow-hidden flex items-center justify-center relative">
+                    <div className="w-full h-28 sm:h-32 border-2 border-[#111827] bg-white overflow-hidden flex items-center justify-center relative">
                       <img
                         src={p.idCardUrl}
                         alt={`ID card for ${p.fullName}`}
@@ -857,7 +900,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-[#111827] bg-[#FFFDF0] p-4 rounded-none text-center flex flex-col items-center justify-center cursor-pointer hover:bg-white transition-colors">
-                    <Upload className="w-6 h-6 text-[#E5005A] mb-1" />
+                    <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-[#E5005A] mb-1" />
                     <span className="font-arcade text-xs text-[#111827] font-bold">
                       Select or Drag ID Card
                     </span>
@@ -876,18 +919,18 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             ))}
           </div>
 
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 sm:pt-4">
             <button
               onClick={prevStep}
-              className="bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center gap-2"
+              className="w-full sm:w-auto bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2"
             >
-              <ArrowLeft className="w-4 h-4" /> BACK
+              <ArrowLeft className="w-4 h-4 shrink-0" /> BACK
             </button>
             <button
               onClick={nextStep}
-              className="bg-[#111827] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#E5005A] flex items-center gap-2 hover:bg-[#E5005A] transition-colors"
+              className="w-full sm:w-auto bg-[#111827] text-white font-arcade text-xs sm:text-sm px-6 py-3.5 border-2 border-[#111827] shadow-[3px_3px_0_0_#E5005A] flex items-center justify-center gap-2 hover:bg-[#E5005A] transition-colors"
             >
-              REVIEW REGISTRATION <ArrowRight className="w-4 h-4" />
+              <span>REVIEW REGISTRATION</span> <ArrowRight className="w-4 h-4 shrink-0" />
             </button>
           </div>
         </div>
@@ -897,26 +940,26 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       {/* STEP 4: COMPREHENSIVE REVIEW */}
       {/* ---------------------------------------------------- */}
       {currentStep === 4 && (
-        <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 sm:p-8 space-y-6">
-          <div className="border-b-2 border-[#111827] pb-3 flex items-center justify-between">
+        <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8 space-y-5 sm:space-y-6">
+          <div className="border-b-2 border-[#111827] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="font-arcade text-xl text-[#111827] font-bold">
+              <h2 className="font-arcade text-lg sm:text-xl text-[#111827] font-bold">
                 STEP 4: FINAL REVIEW & CONFIRMATION
               </h2>
               <p className="text-xs font-body text-[#111827]/80">
-                Please double-check all information. Once submitted, your registration record will be created.
+                Please double-check all information before submitting.
               </p>
             </div>
-            <span className="bg-[#F4C430] border-2 border-[#111827] font-pixel text-xs px-3 py-1">
+            <span className="bg-[#F4C430] border-2 border-[#111827] font-pixel text-[10px] sm:text-xs px-2.5 sm:px-3 py-1 self-start sm:self-auto">
               STATUS: READY
             </span>
           </div>
 
           {/* Team Summary Card */}
-          <div className="p-4 bg-[#F7E8B5] border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-3.5 sm:p-4 bg-[#F7E8B5] border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <span className="text-[10px] font-pixel text-[#E5005A] uppercase">SQUAD NAME</span>
-              <h3 className="font-pixel text-lg sm:text-xl text-[#111827]">{teamName}</h3>
+              <h3 className="font-pixel text-base sm:text-xl text-[#111827]">{teamName}</h3>
               <p className="text-xs font-body text-[#111827]/80 mt-0.5">
                 Size: {teamSize} Players • Venue: Room No. 318 • Event: 16–17 Oct 2026
               </p>
@@ -929,8 +972,54 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </button>
           </div>
 
-          {/* Players Review Table with College Column */}
-          <div className="border-3 border-[#111827] overflow-x-auto shadow-[3px_3px_0_0_#111827]">
+          {/* Mobile Player Cards Review (<= md) */}
+          <div className="block md:hidden space-y-3">
+            {players.map((p, idx) => (
+              <div key={idx} className="p-3 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] space-y-2 text-xs">
+                <div className="flex items-center justify-between border-b border-[#111827]/20 pb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-pixel text-[10px] text-[#E5005A]">0{idx + 1}.</span>
+                    <span className="font-bold text-[#111827]">{p.fullName}</span>
+                    {idx === 0 && <span className="text-[#E5005A] text-[9px] font-pixel ml-1">[LEADER]</span>}
+                  </div>
+                  <span className={`px-2 py-0.5 font-pixel text-[9px] border border-[#111827] ${
+                    p.isSfit ? 'bg-[#F4C430] text-[#111827]' : 'bg-[#00AFC6] text-white'
+                  }`}>
+                    {p.isSfit ? 'SFIT' : 'NON-SFIT'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-body text-gray-700">
+                  <div>
+                    <span className="text-gray-500 block text-[9px]">COLLEGE:</span>
+                    <span className="font-arcade text-[10px] text-[#111827] truncate block">{p.isSfit ? 'SFIT' : (p.college || 'External College')}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[9px]">STUDENT ID:</span>
+                    <span className="font-mono text-[#111827]">{p.studentId}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-gray-500 block text-[9px]">EMAIL:</span>
+                    <span className="font-mono text-[#00AFC6] break-all">{p.email}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[9px]">BRANCH / YR:</span>
+                    <span>{p.branch} - {p.year}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[9px]">ID CARD:</span>
+                    {p.idCardUrl ? (
+                      <span className="text-[#2E7D32] font-pixel text-[9px]">✓ UPLOADED</span>
+                    ) : (
+                      <span className="text-[#E5005A] font-pixel text-[9px]">MISSING</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Players Review Table (> md) */}
+          <div className="hidden md:block border-3 border-[#111827] overflow-x-auto shadow-[3px_3px_0_0_#111827]">
             <table className="w-full text-left text-xs font-body border-collapse">
               <thead>
                 <tr className="bg-[#111827] text-white font-arcade">
@@ -980,31 +1069,31 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
           </div>
 
           {/* Fee Notice */}
-          <div className="p-4 bg-[#00AFC6] text-[#111827] border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center justify-between">
+          <div className="p-3.5 sm:p-4 bg-[#00AFC6] text-[#111827] border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="font-pixel text-xs">REGISTRATION FEE</span>
+              <span className="font-pixel text-[11px] sm:text-xs">REGISTRATION FEE</span>
               <p className="text-xs font-body">Covers tournament entry pass, task materials, and match participation.</p>
             </div>
             <div className="font-pixel text-xl font-bold">{money(payCfg.perHeadAmount * (players.length || 0))}</div>
           </div>
 
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 sm:pt-4">
             <button
               onClick={prevStep}
-              className="bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center gap-2"
+              className="w-full sm:w-auto bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2"
             >
-              <ArrowLeft className="w-4 h-4" /> BACK
+              <ArrowLeft className="w-4 h-4 shrink-0" /> BACK
             </button>
             <button
               onClick={handleSubmitRegistration}
               disabled={isSubmitting}
-              className="bg-[#E5005A] text-white font-arcade text-sm px-8 py-3.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] flex items-center gap-2 hover:bg-[#111827] transition-colors disabled:opacity-50"
+              className="w-full sm:w-auto bg-[#E5005A] text-white font-arcade text-xs sm:text-sm px-6 sm:px-8 py-3.5 border-2 sm:border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#111827] transition-colors disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span>CREATING REGISTRATION...</span>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" /> CONFIRM & GO TO PAYMENT
+                  <Sparkles className="w-4 h-4 shrink-0" /> <span>CONFIRM & GO TO PAYMENT</span>
                 </>
               )}
             </button>
@@ -1016,37 +1105,37 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       {/* STEP 5: PAYMENT GATEWAY INTERFACE (CONTRACT BOUNDARY) */}
       {/* ---------------------------------------------------- */}
       {currentStep === 5 && createdRegistration && (
-        <div className="bg-[#FFFDF0] border-4 border-[#111827] shadow-[6px_6px_0_0_#111827] p-6 sm:p-8 space-y-6">
+        <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8 space-y-5 sm:space-y-6">
           <div className="border-b-2 border-[#111827] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="bg-[#4CAF50] text-white font-pixel text-xs px-2 py-0.5 border border-[#111827]">
+              <span className="bg-[#4CAF50] text-white font-pixel text-[10px] sm:text-xs px-2 py-0.5 border border-[#111827] inline-block">
                 REGISTRATION CREATED
               </span>
-              <h2 className="font-pixel text-2xl text-[#111827] mt-1">
+              <h2 className="font-pixel text-xl sm:text-2xl text-[#111827] mt-1">
                 COMPLETE SQUAD PAYMENT
               </h2>
             </div>
-            <div className="bg-[#F7E8B5] border-2 border-[#111827] p-2 text-right">
-              <span className="text-[10px] font-pixel text-gray-600 block">REGISTRATION ID</span>
-              <span className="font-pixel text-sm text-[#E5005A] font-bold">
+            <div className="bg-[#F7E8B5] border-2 border-[#111827] p-2 text-left sm:text-right">
+              <span className="text-[9px] sm:text-[10px] font-pixel text-gray-600 block">REGISTRATION ID</span>
+              <span className="font-pixel text-xs sm:text-sm text-[#E5005A] font-bold break-all">
                 {createdRegistration.registrationId}
               </span>
             </div>
           </div>
 
-          <div className="p-4 bg-[#111827] text-white border-3 border-[#111827] shadow-[3px_3px_0_0_#00AFC6] flex items-center justify-between">
+          <div className="p-3.5 sm:p-4 bg-[#111827] text-white border-2 sm:border-3 border-[#111827] shadow-[3px_3px_0_0_#00AFC6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="text-xs text-gray-300 font-body">Squad: <strong className="text-white">{createdRegistration.teamName}</strong></p>
               <p className="text-xs text-gray-300 font-body">Leader: {createdRegistration.leaderName} ({createdRegistration.contactEmail})</p>
             </div>
-            <div className="text-right">
-              <span className="text-[10px] font-pixel text-[#00AFC6]">TOTAL AMOUNT</span>
-              <div className="font-pixel text-2xl text-[#F4C430]">₹500</div>
+            <div className="sm:text-right flex items-center justify-between sm:block">
+              <span className="text-[10px] font-pixel text-[#00AFC6] block">TOTAL AMOUNT</span>
+              <div className="font-pixel text-xl sm:text-2xl text-[#F4C430]">₹500</div>
             </div>
           </div>
 
           {/* Payment Method Selector Tabs */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <h3 className="font-arcade text-xs font-bold uppercase tracking-wider text-[#111827]">
               Choose Payment Method
             </h3>
@@ -1056,9 +1145,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               {mockEnabled && <button
                 type="button"
                 onClick={() => setPaymentMethod('MOCK')}
-                className={`p-4 border-3 border-[#111827] text-left transition-all ${
+                className={`p-3.5 sm:p-4 border-2 sm:border-3 border-[#111827] text-left transition-all ${
                   paymentMethod === 'MOCK'
-                    ? 'bg-[#00AFC6] text-white shadow-[4px_4px_0_0_#111827]'
+                    ? 'bg-[#00AFC6] text-white shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827]'
                     : 'bg-[#FFFDF0] text-[#111827] hover:bg-[#F7E8B5]'
                 }`}
               >
@@ -1072,9 +1161,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <button
                 type="button"
                 onClick={() => setPaymentMethod('MANUAL_UPI')}
-                className={`p-4 border-3 border-[#111827] text-left transition-all ${
+                className={`p-3.5 sm:p-4 border-2 sm:border-3 border-[#111827] text-left transition-all ${
                   paymentMethod === 'MANUAL_UPI'
-                    ? 'bg-[#E5005A] text-white shadow-[4px_4px_0_0_#111827]'
+                    ? 'bg-[#E5005A] text-white shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827]'
                     : 'bg-[#FFFDF0] text-[#111827] hover:bg-[#F7E8B5]'
                 }`}
               >
@@ -1090,8 +1179,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
           {mockEnabled && paymentMethod === 'MOCK' && (
             <div className="p-6 bg-[#F7E8B5] border-3 border-[#111827] space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#E5005A]" />
-                <h4 className="font-arcade text-sm font-bold text-[#111827]">
+                <Sparkles className="w-5 h-5 text-[#E5005A] shrink-0" />
+                <h4 className="font-arcade text-xs sm:text-sm font-bold text-[#111827]">
                   TEST IN DEVELOPMENT PAYMENT MODE
                 </h4>
               </div>
@@ -1102,7 +1191,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <button
                 onClick={handleMockPayment}
                 disabled={paymentLoading}
-                className="w-full bg-[#4CAF50] text-white font-arcade text-sm py-4 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] hover:bg-[#111827] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-[#4CAF50] text-white font-arcade text-xs sm:text-sm py-3.5 sm:py-4 border-2 sm:border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] hover:bg-[#111827] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {paymentLoading ? (
                   <span>SIMULATING PAYMENT SETTLEMENT...</span>
@@ -1117,23 +1206,23 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
           {/* Method 2: Manual UPI Transfer & UTR Submission */}
           {paymentMethod === 'MANUAL_UPI' && (
-            <div className="p-6 bg-[#FFFDF0] border-3 border-[#111827] space-y-5">
-              <div className="flex flex-col sm:flex-row items-center gap-6 border-b-2 border-[#111827] pb-4">
-                <div className="w-36 h-36 bg-white border-3 border-[#111827] p-2 flex items-center justify-center shrink-0 shadow-[2px_2px_0_0_#111827]">
+            <div className="p-4 sm:p-6 bg-[#FFFDF0] border-2 sm:border-3 border-[#111827] space-y-4 sm:space-y-5">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 border-b-2 border-[#111827] pb-4 text-center sm:text-left">
+                <div className="w-32 h-32 sm:w-36 sm:h-36 bg-white border-2 sm:border-3 border-[#111827] p-2 flex items-center justify-center shrink-0 shadow-[2px_2px_0_0_#111827] mx-auto sm:mx-0">
                   {/* Decorative QR code graphic */}
                   <div className="w-full h-full bg-[#111827] p-1 flex flex-col items-center justify-center text-[#F4C430]">
-                    <QrCode className="w-20 h-20 text-white" />
+                    <QrCode className="w-16 h-16 sm:w-20 sm:h-20 text-white" />
                     <span className="text-[8px] font-pixel text-white mt-1">UPI: adg.deception@sbi</span>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-xs font-body">
+                <div className="space-y-1.5 sm:space-y-2 text-xs font-body">
                   <h4 className="font-pixel text-xs text-[#E5005A]">SCAN & PAY ₹500 VIA ANY UPI APP</h4>
                   <p className="text-[#111827]">
-                    VPA: <strong className="font-mono bg-[#F7E8B5] px-1 border border-[#111827]">adg.deception@sbi</strong>
+                    VPA: <strong className="font-mono bg-[#F7E8B5] px-1 border border-[#111827] break-all">adg.deception@sbi</strong>
                   </p>
                   <p className="text-[#111827]">Account Name: <strong className="font-bold">AI Developers Group SFIT</strong></p>
-                  <p className="text-[#111827]/80">Remark / Note: <strong className="font-mono">{createdRegistration.registrationId}</strong></p>
+                  <p className="text-[#111827]/80">Remark / Note: <strong className="font-mono break-all">{createdRegistration.registrationId}</strong></p>
                 </div>
               </div>
 
@@ -1147,7 +1236,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                     value={utrNumber}
                     onChange={(e) => { setUtrNumber(e.target.value); setErrorMsg(null); }}
                     placeholder="e.g. 426189012345 or UPI-REF-9928"
-                    className="w-full px-4 py-3 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] font-mono text-sm focus:outline-none"
+                    className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] font-mono text-xs sm:text-sm focus:outline-none"
                   />
                 </div>
 
@@ -1214,7 +1303,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 <button
                   onClick={handleManualUpiSubmit}
                   disabled={paymentLoading}
-                  className="w-full bg-[#E5005A] text-white font-arcade text-xs sm:text-sm py-3.5 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] hover:bg-[#111827] transition-all disabled:opacity-50"
+                  className="w-full bg-[#E5005A] text-white font-arcade text-xs sm:text-sm py-3.5 border-2 sm:border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] hover:bg-[#111827] transition-all disabled:opacity-50"
                 >
                   {paymentLoading ? 'SUBMITTING EVIDENCE...' : paySummary && !paySummary.fullyPaid ? 'SUBMIT NEXT PAYMENT' : 'SUBMIT UTR FOR ADMIN VERIFICATION'}
                 </button>
