@@ -3,11 +3,13 @@
  * @description Core payment coordinator & gateway boundary for Main App (Part 1)
  */
 
+import crypto from 'crypto';
 import { MockPaymentProvider } from './providers/MockPaymentProvider.js';
 import { ManualUPIProvider } from './providers/ManualUPIProvider.js';
 import { RazorpayStubProvider } from './providers/RazorpayStubProvider.js';
 import { PaymentStatus, RegistrationStatus } from '../../../../shared/payment-contract/payment-status.js';
 import { store } from '../../store/dataStore.js';
+import { expectedAmountForTeamSize, totalSubmitted, isFullyPaid } from '../../utils/fees.js';
 import { ticketService } from '../ticketService.js';
 import { emailService } from '../emailService.js';
 
@@ -19,19 +21,26 @@ export class PaymentService {
   }
 
   getProvider(preferredMethod) {
-    if (process.env.MOCK_PAYMENT === 'true' || preferredMethod === 'MOCK') {
+    const mockMode = process.env.MOCK_PAYMENT === 'true';
+
+    // In mock mode everything routes to the mock provider so the flow can be
+    // exercised without money. Outside it, 'MOCK' is not an option a client can ask for.
+    if (mockMode) {
       return this.mockProvider;
-    }
-    if (preferredMethod === 'MANUAL_UPI' || preferredMethod === 'UPI') {
-      return this.manualUpiProvider;
     }
     if (preferredMethod === 'RAZORPAY') {
       return this.razorpayProvider;
     }
-    return this.mockProvider;
+    // Manual UPI is the live default: show the QR, collect the UTR, organiser verifies.
+    return this.manualUpiProvider;
   }
 
-  async createPayment({ registrationId, amount = 500, currency = 'INR', teamName, customer, preferredMethod = 'MOCK' }) {
+  async createPayment({ registrationId, amount, currency = 'INR', teamName, customer, preferredMethod = 'MOCK' }) {
+    const reg0 = store.registrations.find(r => r.registrationId === registrationId);
+    const expected = expectedAmountForTeamSize(reg0?.teamSize);
+    // The amount a client sends is only a hint for the QR; what the squad owes is
+    // always derived from its size here on the server.
+    amount = expected;
     const provider = this.getProvider(preferredMethod);
     const result = await provider.createPayment({ registrationId, amount, currency, teamName, customer });
 
@@ -43,6 +52,9 @@ export class PaymentService {
         paymentId: result.paymentId,
         registrationId,
         amount,
+        amountExpected: expected,
+        amountPaid: 0,
+        entries: [],
         currency,
         method: preferredMethod,
         provider: provider.name,
@@ -89,60 +101,102 @@ export class PaymentService {
     return store.payments.find(p => p.registrationId === registrationId) || null;
   }
 
-  async submitManualUpiEvidence({ registrationId, transactionReference, evidenceUrl, evidencePublicId }) {
+  /**
+   * Record one payment a squad says it has made. Members may each submit their own
+   * share, so this appends to a list rather than replacing a single reference. The
+   * squad moves to verification once the submitted total covers what it owes; until
+   * then it stays open so the remaining members can still pay.
+   */
+  async submitManualUpiEvidence({ registrationId, transactionReference, amount, payerName, evidenceUrl, evidencePublicId }) {
+    const reg = store.registrations.find(r => r.registrationId === registrationId);
+    if (!reg) {
+      throw new Error(`Registration "${registrationId}" was not found.`);
+    }
+    const expected = expectedAmountForTeamSize(reg.teamSize);
+
     let payment = store.payments.find(p => p.registrationId === registrationId);
     if (!payment) {
       payment = {
         _id: `pay_${Date.now()}`,
         paymentId: `PAY_UPI_${Date.now()}`,
         registrationId,
-        amount: 500,
+        amount: expected,
+        amountExpected: expected,
+        amountPaid: 0,
+        entries: [],
         currency: 'INR',
         method: 'MANUAL_UPI',
         provider: 'MANUAL_UPI',
-        transactionReference,
-        status: PaymentStatus.PENDING_VERIFICATION,
-        evidence: { url: evidenceUrl || '', publicId: evidencePublicId || '' },
+        transactionReference: '',
+        status: PaymentStatus.PENDING,
+        evidence: { url: '', publicId: '' },
         createdAt: new Date(),
         updatedAt: new Date()
       };
       store.payments.push(payment);
-    } else {
-      payment.method = 'MANUAL_UPI';
-      payment.status = PaymentStatus.PENDING_VERIFICATION;
-      payment.transactionReference = transactionReference;
-      payment.evidence = { url: evidenceUrl || '', publicId: evidencePublicId || '' };
-      payment.updatedAt = new Date();
     }
 
-    const reg = store.registrations.find(r => r.registrationId === registrationId);
-    if (reg) {
-      reg.status = RegistrationStatus.PAYMENT_VERIFICATION;
-      reg.updatedAt = new Date();
+    // Older records predate the entries list.
+    if (!Array.isArray(payment.entries)) payment.entries = [];
+    payment.amountExpected = expected;
+    payment.amount = expected;
+
+    const normalised = String(transactionReference).replace(/[\s-]/g, '');
+    if (payment.entries.some(e => e.transactionReference === normalised)) {
+      throw new Error(`Reference ${normalised} has already been submitted for this team.`);
     }
+
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) {
+      throw new Error('Enter the amount you paid, in rupees.');
+    }
+
+    payment.entries.push({
+      _id: `ent_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      transactionReference: normalised,
+      amount: value,
+      payerName: (payerName || '').trim() || reg.leaderName || 'Team member',
+      evidence: { url: evidenceUrl || '', publicId: evidencePublicId || '' },
+      status: 'SUBMITTED',
+      submittedAt: new Date()
+    });
+
+    payment.amountPaid = totalSubmitted(payment);
+    payment.method = 'MANUAL_UPI';
+    payment.transactionReference = payment.entries.map(e => e.transactionReference).join(', ');
+    if (evidenceUrl) payment.evidence = { url: evidenceUrl, publicId: evidencePublicId || '' };
+    payment.updatedAt = new Date();
+
+    const covered = isFullyPaid(payment);
+    payment.status = covered ? PaymentStatus.PENDING_VERIFICATION : PaymentStatus.PROCESSING;
+    reg.status = covered ? RegistrationStatus.PAYMENT_VERIFICATION : RegistrationStatus.PAYMENT_PENDING;
+    reg.updatedAt = new Date();
 
     store.logAudit({
-      actor: reg?.contactEmail || 'STUDENT',
+      actor: reg.contactEmail || 'STUDENT',
       action: 'PAYMENT_EVIDENCE_SUBMITTED',
       entity: 'Payment',
       entityId: payment.paymentId,
-      metadata: { registrationId, transactionReference }
+      metadata: { registrationId, transactionReference: normalised, amount: value, paidSoFar: payment.amountPaid, expected }
     });
 
-    // Notify student via email that verification is pending
-    if (reg) {
+    if (covered) {
       await emailService.sendVerificationPendingEmail({
         to: reg.contactEmail,
         leaderName: reg.leaderName,
         teamName: reg.teamName,
         registrationId,
-        transactionReference
+        transactionReference: payment.transactionReference
       });
     }
 
     return {
       success: true,
-      status: PaymentStatus.PENDING_VERIFICATION,
+      status: payment.status,
+      amountPaid: payment.amountPaid,
+      amountExpected: expected,
+      remaining: Math.max(0, expected - payment.amountPaid),
+      fullyPaid: covered,
       payment
     };
   }
@@ -153,6 +207,19 @@ export class PaymentService {
       throw new Error(`Payment record not found: ${paymentId}`);
     }
 
+    // A squad only goes in once the whole team is paid for. Approving a partial
+    // total would issue an entry pass for players who have not been paid for.
+    payment.amountPaid = totalSubmitted(payment);
+    if (!isFullyPaid(payment)) {
+      const short = Number(payment.amountExpected || 0) - payment.amountPaid;
+      throw new Error(
+        `Cannot confirm yet: ₹${payment.amountPaid} received of ₹${payment.amountExpected} owed. Still short by ₹${short}.`
+      );
+    }
+
+    if (Array.isArray(payment.entries)) {
+      payment.entries.forEach(e => { if (e.status !== 'REJECTED') e.status = 'VERIFIED'; });
+    }
     payment.status = PaymentStatus.PAID;
     payment.verifiedAt = new Date();
     payment.verifiedBy = adminUser;
@@ -212,6 +279,110 @@ export class PaymentService {
     });
 
     return { success: true, payment, registration: reg };
+  }
+
+  /**
+   * Entry point for verified gateway webhooks.
+   *
+   * The caller is responsible for signature verification; by the time we get here the
+   * payload is trusted. This method is deliberately strict about two things the old
+   * handler ignored: the amount actually captured must match what we billed, and a
+   * payment already marked PAID must not run the fulfilment pipeline twice (gateways
+   * retry webhooks aggressively, and a second run would issue a duplicate ticket).
+   */
+  async handleWebhook({ providerPaymentId, registrationId, status, transactionReference, amount }) {
+    let payment = null;
+    if (providerPaymentId) {
+      payment = store.payments.find(p => p.providerPaymentId === providerPaymentId || p.paymentId === providerPaymentId);
+    }
+    if (!payment && registrationId) {
+      payment = store.payments.find(p => p.registrationId === registrationId);
+    }
+    if (!payment) {
+      throw new Error(`Webhook references an unknown payment (providerPaymentId=${providerPaymentId}, registrationId=${registrationId})`);
+    }
+
+    // Idempotency: a retried webhook for an already-settled payment is acknowledged, not reprocessed.
+    if (payment.status === PaymentStatus.PAID) {
+      return { success: true, duplicate: true, payment };
+    }
+
+    if (status !== PaymentStatus.PAID) {
+      payment.status = status;
+      payment.updatedAt = new Date();
+      store.logAudit({
+        actor: 'GATEWAY_WEBHOOK',
+        action: `PAYMENT_WEBHOOK_${status}`,
+        entity: 'Payment',
+        entityId: payment.paymentId,
+        metadata: { registrationId: payment.registrationId, status }
+      });
+      return { success: true, payment };
+    }
+
+    // Amount check: never confirm a registration on a short payment.
+    if (amount !== undefined && amount !== null) {
+      const expected = Number(payment.amount);
+      const received = Number(amount);
+      if (!Number.isFinite(received) || received !== expected) {
+        payment.status = PaymentStatus.PENDING_VERIFICATION;
+        payment.updatedAt = new Date();
+        store.logAudit({
+          actor: 'GATEWAY_WEBHOOK',
+          action: 'PAYMENT_AMOUNT_MISMATCH',
+          entity: 'Payment',
+          entityId: payment.paymentId,
+          metadata: { registrationId: payment.registrationId, expected, received }
+        });
+        throw new Error(`Amount mismatch for ${payment.paymentId}: expected ${expected}, received ${received}. Queued for admin review.`);
+      }
+    }
+
+    payment.status = PaymentStatus.PAID;
+    payment.transactionReference = transactionReference || payment.transactionReference;
+    payment.providerPaymentId = providerPaymentId || payment.providerPaymentId;
+    payment.verifiedAt = new Date();
+    payment.verifiedBy = 'GATEWAY_WEBHOOK';
+    payment.updatedAt = new Date();
+
+    const reg = store.registrations.find(r => r.registrationId === payment.registrationId);
+    if (reg) {
+      reg.status = RegistrationStatus.CONFIRMED;
+      reg.updatedAt = new Date();
+      await this.handlePaymentSuccessful(payment, reg);
+    }
+
+    store.logAudit({
+      actor: 'GATEWAY_WEBHOOK',
+      action: 'PAYMENT_CONFIRMED_VIA_WEBHOOK',
+      entity: 'Payment',
+      entityId: payment.paymentId,
+      metadata: { registrationId: payment.registrationId, amount: payment.amount, transactionReference }
+    });
+
+    return { success: true, payment, registration: reg };
+  }
+
+  /**
+   * Verifies a Razorpay webhook HMAC over the exact raw bytes received.
+   * Uses a constant-time compare so the secret cannot be recovered by timing the endpoint.
+   */
+  verifyWebhookSignature(rawBody, signature) {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+    if (!secret) {
+      return { ok: false, reason: 'RAZORPAY_WEBHOOK_SECRET is not configured' };
+    }
+    if (!rawBody || !signature) {
+      return { ok: false, reason: 'Missing raw body or signature header' };
+    }
+
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    const a = Buffer.from(expected, 'utf8');
+    const b = Buffer.from(String(signature), 'utf8');
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return { ok: false, reason: 'Signature mismatch' };
+    }
+    return { ok: true };
   }
 
   async simulateMockPaid({ registrationId }) {

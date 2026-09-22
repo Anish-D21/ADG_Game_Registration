@@ -8,6 +8,7 @@ import { FaqPage } from './pages/FaqPage.tsx';
 import { RegistrationPage } from './pages/RegistrationPage.tsx';
 import { RegistrationStatusPage } from './pages/RegistrationStatusPage.tsx';
 import { AdminPage } from './pages/AdminPage.tsx';
+import { PaymentDeskPage } from './pages/PaymentDeskPage.tsx';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -37,6 +38,7 @@ export default function App() {
           />
         )}
         {activeTab === 'admin' && <AdminPage />}
+        {activeTab === 'payments' && <PaymentDeskPage />}
       </main>
 
       {/* Global Footer */}

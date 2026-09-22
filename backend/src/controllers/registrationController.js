@@ -6,13 +6,69 @@
 import { registrationService } from '../services/registrationService.js';
 import { ticketService } from '../services/ticketService.js';
 import { EVENT_CONFIG } from '../../../shared/eventConfig.js';
+import { perHeadAmount, currency, expectedAmountForTeamSize } from '../utils/fees.js';
 import { store } from '../store/dataStore.js';
+
+
+/**
+ * Stamp the live fee into the config before it leaves the server.
+ *
+ * The browser bundles eventConfig at build time, so anything it reads from there is
+ * frozen at whatever the defaults were. Substituting here means PER_HEAD_AMOUNT in the
+ * environment is the only place the number exists - rules copy and FAQ answers included.
+ */
+function withLiveFees(config) {
+  const per = perHeadAmount();
+  const cur = currency();
+  const tokens = {
+    '{{PER_HEAD}}': String(per),
+    '{{CURRENCY}}': cur,
+    '{{TEAM_5}}': `${cur} ${expectedAmountForTeamSize(config.teamConfig.minPlayers)}`,
+    '{{TEAM_6}}': `${cur} ${expectedAmountForTeamSize(config.teamConfig.maxPlayers)}`
+  };
+
+  const fill = value => {
+    if (typeof value === 'string') {
+      return Object.entries(tokens).reduce((out, [k, v]) => out.split(k).join(v), value);
+    }
+    if (Array.isArray(value)) return value.map(fill);
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fill(v)]));
+    }
+    return value;
+  };
+
+  const filled = fill(config);
+  filled.registrationConfig = {
+    ...filled.registrationConfig,
+    perHeadAmount: per,
+    currency: cur,
+    minTeamAmount: expectedAmountForTeamSize(config.teamConfig.minPlayers),
+    maxTeamAmount: expectedAmountForTeamSize(config.teamConfig.maxPlayers)
+  };
+  return filled;
+}
 
 export async function getGameInfo(req, res) {
   try {
+    const { slug } = req.params;
+    if (slug && slug.toLowerCase() !== EVENT_CONFIG.slug.toLowerCase()) {
+      return res.status(404).json({ success: false, message: `No game found with slug "${slug}".` });
+    }
+
     return res.json({
       success: true,
-      game: EVENT_CONFIG
+      game: withLiveFees(EVENT_CONFIG),
+      paymentConfig: {
+        // Drives which payment options the registration form is allowed to offer.
+        mockEnabled: process.env.MOCK_PAYMENT === 'true',
+        upiVpa: process.env.UPI_VPA || '',
+        payeeName: process.env.UPI_PAYEE_NAME || 'ADG DECEPTION',
+        perHeadAmount: perHeadAmount(),
+        currency: currency(),
+        minTeamAmount: expectedAmountForTeamSize(EVENT_CONFIG.teamConfig.minPlayers),
+        maxTeamAmount: expectedAmountForTeamSize(EVENT_CONFIG.teamConfig.maxPlayers)
+      }
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

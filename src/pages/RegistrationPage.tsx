@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchGameInfo } from '../services/api.ts';
+import { useEventConfig } from '../services/useEventConfig.ts';
 import { 
   createRegistration, 
   uploadDocument, 
@@ -73,10 +75,27 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   const [createdRegistration, setCreatedRegistration] = useState<any>(null);
 
   // Step 5 Payment State
-  const [paymentMethod, setPaymentMethod] = useState<'MOCK' | 'MANUAL_UPI'>('MOCK');
+  const { payment: payCfg, money } = useEventConfig();
+  const [paymentMethod, setPaymentMethod] = useState<'MOCK' | 'MANUAL_UPI'>('MANUAL_UPI');
+  const [mockEnabled, setMockEnabled] = useState(false);
+
+  // The server decides whether the mock path exists at all. In production it does not,
+  // so the option must never be offered - it would hand out free confirmed tickets.
+  useEffect(() => {
+    fetchGameInfo()
+      .then(res => {
+        const enabled = Boolean(res?.paymentConfig?.mockEnabled);
+        setMockEnabled(enabled);
+        if (!enabled) setPaymentMethod('MANUAL_UPI');
+      })
+      .catch(() => setMockEnabled(false));
+  }, []);
   const [utrNumber, setUtrNumber] = useState('');
   const [utrProofUrl, setUtrProofUrl] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paidAmount, setPaidAmount] = useState('');
+  const [payerName, setPayerName] = useState('');
+  const [paySummary, setPaySummary] = useState<any>(null);
 
   // Handle Team Size change (5 or 6)
   const handleTeamSizeChange = (newSize: 5 | 6) => {
@@ -307,21 +326,35 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
     }
   };
 
-  // Manual UPI Submission
+  // Manual UPI Submission. Members may pay separately, so this can be run several
+  // times for one squad - the form stays open until the total is covered.
   const handleManualUpiSubmit = async () => {
     if (!createdRegistration) return;
     if (!utrNumber.trim() || utrNumber.trim().length < 6) {
       setErrorMsg('Please enter a valid 12-digit UPI UTR number or bank transaction ID.');
       return;
     }
+    const amt = Number(paidAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setErrorMsg('Please enter how much you paid, in rupees.');
+      return;
+    }
 
     setPaymentLoading(true);
+    setErrorMsg(null);
     try {
-      await submitManualUpi(createdRegistration.registrationId, {
+      const res = await submitManualUpi(createdRegistration.registrationId, {
         transactionReference: utrNumber.trim(),
-        evidenceUrl: utrProofUrl || 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&auto=format&fit=crop&q=80'
+        amount: amt,
+        payerName: payerName.trim(),
+        evidenceUrl: utrProofUrl || ''
       });
-      onSuccess(createdRegistration.registrationId);
+      setPaySummary(res);
+      setUtrNumber('');
+      setPaidAmount('');
+      setPayerName('');
+      // Only move on once the whole squad is covered.
+      if (res.fullyPaid) onSuccess(createdRegistration.registrationId);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to submit UTR reference');
     } finally {
@@ -354,7 +387,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         </div>
         <div className="w-full sm:w-auto bg-[#00AFC6] text-white font-pixel text-xs px-3.5 sm:px-4 py-2 border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex sm:flex-col items-center justify-between sm:justify-center text-center shrink-0">
           <div>ENTRY FEE</div>
-          <div className="text-sm sm:text-base font-bold">₹500 / TEAM</div>
+          <div className="text-base font-bold">{money(payCfg.perHeadAmount)} / PLAYER</div>
         </div>
       </div>
 
@@ -1041,7 +1074,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <span className="font-pixel text-[11px] sm:text-xs">REGISTRATION FEE</span>
               <p className="text-xs font-body">Covers tournament entry pass, task materials, and match participation.</p>
             </div>
-            <div className="font-pixel text-lg sm:text-xl font-bold self-end sm:self-auto">₹500</div>
+            <div className="font-pixel text-xl font-bold">{money(payCfg.perHeadAmount * (players.length || 0))}</div>
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 sm:pt-4">
@@ -1107,9 +1140,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               Choose Payment Method
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {/* Option 1: Mock Dev Instant Pay */}
-              <button
+            <div className={`grid grid-cols-1 gap-4 ${mockEnabled ? 'sm:grid-cols-2' : ''}`}>
+              {/* Option 1: Mock Dev Instant Pay - development only */}
+              {mockEnabled && <button
                 type="button"
                 onClick={() => setPaymentMethod('MOCK')}
                 className={`p-3.5 sm:p-4 border-2 sm:border-3 border-[#111827] text-left transition-all ${
@@ -1122,7 +1155,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 <div className="text-xs font-body opacity-90">
                   Development Mode: Instantly marks payment as PAID, issues official QR pass and receipt for testing.
                 </div>
-              </button>
+              </button>}
 
               {/* Option 2: Manual UPI / QR */}
               <button
@@ -1136,15 +1169,15 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               >
                 <div className="font-pixel text-xs mb-1">UPI QR & UTR SUBMIT</div>
                 <div className="text-xs font-body opacity-90">
-                  Scan ADG UPI QR, transfer ₹500, and enter 12-digit UTR reference for Admin verification.
+                  Scan the UPI QR, pay your share, and enter your 12-digit UTR reference plus the amount you paid.
                 </div>
               </button>
             </div>
           </div>
 
           {/* Method 1: Mock Payment Flow */}
-          {paymentMethod === 'MOCK' && (
-            <div className="p-4 sm:p-6 bg-[#F7E8B5] border-2 sm:border-3 border-[#111827] space-y-3 sm:space-y-4">
+          {mockEnabled && paymentMethod === 'MOCK' && (
+            <div className="p-6 bg-[#F7E8B5] border-3 border-[#111827] space-y-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#E5005A] shrink-0" />
                 <h4 className="font-arcade text-xs sm:text-sm font-bold text-[#111827]">
@@ -1164,7 +1197,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                   <span>SIMULATING PAYMENT SETTLEMENT...</span>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-5 h-5 shrink-0" /> <span>SIMULATE INSTANT SUCCESSFUL PAYMENT (₹500)</span>
+                    <CheckCircle2 className="w-5 h-5" /> SIMULATE INSTANT SUCCESSFUL PAYMENT (DEV)
                   </>
                 )}
               </button>
@@ -1207,9 +1240,56 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                   />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-arcade text-xs font-bold text-[#111827] mb-1">
+                      Amount You Paid (₹) *
+                    </label>
+                    <input
+                      type="number" min="1" step="1"
+                      value={paidAmount}
+                      onChange={(e) => { setPaidAmount(e.target.value); setErrorMsg(null); }}
+                      placeholder="e.g. 100"
+                      className="w-full px-4 py-3 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] font-mono text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-arcade text-xs font-bold text-[#111827] mb-1">
+                      Who Paid? (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={payerName}
+                      onChange={(e) => setPayerName(e.target.value)}
+                      placeholder="Player name"
+                      className="w-full px-4 py-3 bg-[#FFFDF0] border-2 border-[#111827] text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Running total, so the squad can see what is still outstanding. */}
+                {paySummary && (
+                  <div className={`p-3 border-2 border-[#111827] text-sm ${
+                    paySummary.fullyPaid ? 'bg-[#2E7D32]/10' : 'bg-[#F9A825]/15'
+                  }`}>
+                    <p className="font-bold">
+                      ₹{paySummary.amountPaid} received of ₹{paySummary.amountExpected}
+                    </p>
+                    {paySummary.fullyPaid ? (
+                      <p className="text-[#2E7D32] text-xs mt-0.5">
+                        Squad fully paid. Sent to the organisers for verification.
+                      </p>
+                    ) : (
+                      <p className="text-[#C62828] text-xs mt-0.5">
+                        Still ₹{paySummary.remaining} to go — the next member can submit their UTR below.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label className="block font-arcade text-xs font-bold text-[#111827] mb-1">
-                    Payment Proof / Screenshot (Optional in dev)
+                    Payment Proof / Screenshot (Optional)
                   </label>
                   <input
                     type="text"
@@ -1225,7 +1305,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                   disabled={paymentLoading}
                   className="w-full bg-[#E5005A] text-white font-arcade text-xs sm:text-sm py-3.5 border-2 sm:border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] hover:bg-[#111827] transition-all disabled:opacity-50"
                 >
-                  {paymentLoading ? 'SUBMITTING EVIDENCE...' : 'SUBMIT UTR FOR ADMIN VERIFICATION'}
+                  {paymentLoading ? 'SUBMITTING EVIDENCE...' : paySummary && !paySummary.fullyPaid ? 'SUBMIT NEXT PAYMENT' : 'SUBMIT UTR FOR ADMIN VERIFICATION'}
                 </button>
               </div>
             </div>

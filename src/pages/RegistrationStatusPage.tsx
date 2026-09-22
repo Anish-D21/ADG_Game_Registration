@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchGameInfo } from '../services/api.ts';
 import { fetchRegistration, simulateMockPayment, submitManualUpi } from '../services/api.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { jsPDF } from 'jspdf';
@@ -36,6 +37,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   // Payment Modal if pending
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [utrInput, setUtrInput] = useState('');
+  const [payCfg, setPayCfg] = useState<any>({ mockEnabled: false, upiVpa: '' });
+  const [utrAmount, setUtrAmount] = useState('');
+  const [utrPayer, setUtrPayer] = useState('');
   const [paymentActionLoading, setPaymentActionLoading] = useState(false);
 
   useEffect(() => {
@@ -81,6 +85,12 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     }
   };
 
+  useEffect(() => {
+    fetchGameInfo()
+      .then(r => setPayCfg(r?.paymentConfig || { mockEnabled: false, upiVpa: '' }))
+      .catch(() => setPayCfg({ mockEnabled: false, upiVpa: '' }));
+  }, []);
+
   // Manual UPI submit handler from Status page
   const handleUpiSubmit = async () => {
     if (!registration) return;
@@ -88,13 +98,25 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
       setErrorMsg('Please enter a valid 12-digit UPI UTR number.');
       return;
     }
+    const amt = Number(utrAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setErrorMsg('Please enter how much you paid, in rupees.');
+      return;
+    }
     setPaymentActionLoading(true);
     try {
-      await submitManualUpi(registration.registrationId, {
-        transactionReference: utrInput.trim()
+      const res = await submitManualUpi(registration.registrationId, {
+        transactionReference: utrInput.trim(),
+        amount: amt,
+        payerName: utrPayer.trim()
       });
       await loadRegistration(registration.registrationId);
-      setShowPaymentModal(false);
+      setUtrInput('');
+      setUtrAmount('');
+      setUtrPayer('');
+      // Members may pay separately, so keep the form open until the squad is covered.
+      if (res.fullyPaid) setShowPaymentModal(false);
+      else setErrorMsg(`₹${res.amountPaid} of ₹${res.amountExpected} received — ₹${res.remaining} still to go.`);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to submit UPI UTR');
     } finally {
@@ -533,7 +555,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
             </div>
 
             <div className="space-y-4 text-xs font-body">
-              <div className="p-4 bg-[#F7E8B5] border-2 border-[#111827]">
+              {payCfg.mockEnabled && <div className="p-4 bg-[#F7E8B5] border-2 border-[#111827]">
                 <h4 className="font-arcade text-xs font-bold text-[#111827] mb-1">
                   Option 1: Development Instant Pay
                 </h4>
@@ -545,15 +567,21 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                   disabled={paymentActionLoading}
                   className="w-full bg-[#4CAF50] text-white font-arcade text-xs py-2.5 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]"
                 >
-                  {paymentActionLoading ? 'PROCESSING...' : 'INSTANT MOCK PAY (₹500)'}
+                  {paymentActionLoading ? 'PROCESSING...' : 'INSTANT MOCK PAY (DEV ONLY)'}
                 </button>
-              </div>
+              </div>}
 
               <div className="p-4 bg-white border-2 border-[#111827] space-y-2">
                 <h4 className="font-arcade text-xs font-bold text-[#111827]">
-                  Option 2: Enter UPI UTR Reference
+                  Pay by UPI, then enter your reference
                 </h4>
-                <p className="text-gray-700">UPI ID: adg.deception@sbi</p>
+                <p className="text-gray-700">
+                  UPI ID: <strong className="font-mono">{payCfg.upiVpa || 'contact the organisers'}</strong>
+                </p>
+                <p className="text-gray-600 text-[11px]">
+                  Members may each pay their own share. Everyone who pays should submit
+                  their own UTR and amount.
+                </p>
                 <input
                   type="text"
                   value={utrInput}
@@ -561,6 +589,22 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                   placeholder="Enter 12-digit UTR (e.g. 426189012345)"
                   className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-xs"
                 />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number" min="1" step="1"
+                    value={utrAmount}
+                    onChange={(e) => setUtrAmount(e.target.value)}
+                    placeholder="Amount paid (₹)"
+                    className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={utrPayer}
+                    onChange={(e) => setUtrPayer(e.target.value)}
+                    placeholder="Who paid? (optional)"
+                    className="w-full px-3 py-2 bg-white border-2 border-[#111827] text-xs"
+                  />
+                </div>
                 <button
                   onClick={handleUpiSubmit}
                   disabled={paymentActionLoading}

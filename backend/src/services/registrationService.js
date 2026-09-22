@@ -23,6 +23,17 @@ export class RegistrationService {
       throw new Error('Players array is required.');
     }
 
+    // Team names are how squads are called out at the venue, so they must be unique.
+    const normTeamName = teamName.trim().toLowerCase();
+    const nameTaken = store.teams.some(t => {
+      if (t.name.trim().toLowerCase() !== normTeamName) return false;
+      const reg = store.registrations.find(r => r.registrationId === t.registrationId);
+      return !reg || reg.status !== RegistrationStatus.REJECTED;
+    });
+    if (nameTaken) {
+      throw new Error(`Team name "${teamName.trim()}" is already taken. Please choose another.`);
+    }
+
     // 1. Strict Team Size Validation
     teamService.validateTeamSize(players.length);
 
@@ -47,6 +58,13 @@ export class RegistrationService {
       if (!p.mobile || !p.mobile.trim()) {
         throw new Error(`Player ${playerNum}: Mobile number is required.`);
       }
+      // Indian mobile numbers: 10 digits starting 6-9, tolerating +91 / 0 prefixes
+      // and any spacing or dashes the student typed.
+      const digits = p.mobile.replace(/[\s\-()]/g, '').replace(/^(\+91|0091|91|0)/, '');
+      if (!/^[6-9]\d{9}$/.test(digits)) {
+        throw new Error(`Player ${playerNum}: "${p.mobile}" is not a valid 10-digit Indian mobile number.`);
+      }
+      p.mobile = digits;
 
       const normEmail = p.email.trim().toLowerCase();
       const normStudentId = p.studentId.trim().toUpperCase();
@@ -60,6 +78,24 @@ export class RegistrationService {
 
       seenEmails.add(normEmail);
       seenStudentIds.add(normStudentId);
+
+      // A participant may only appear in one squad. Look for an existing student
+      // record and check whether it is already attached to a live registration.
+      const existing = store.students.find(
+        st => st.email.toLowerCase() === normEmail || st.studentId.toUpperCase() === normStudentId
+      );
+      if (existing) {
+        const activeMembership = store.teamMembers.find(tm => tm.studentId === existing._id);
+        if (activeMembership) {
+          const team = store.teams.find(t => t._id === activeMembership.teamId);
+          const reg = team && store.registrations.find(r => r.registrationId === team.registrationId);
+          if (!reg || reg.status !== RegistrationStatus.REJECTED) {
+            throw new Error(
+              `Player ${playerNum}: ${p.fullName.trim()} (${p.email.trim()}) is already registered with team "${team?.name || 'another team'}". Each participant may only join one squad.`
+            );
+          }
+        }
+      }
 
       const stu = await studentService.upsertStudent({
         ...p,

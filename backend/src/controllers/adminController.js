@@ -4,6 +4,8 @@
  */
 
 import { store } from '../store/dataStore.js';
+import { verifyPassword } from '../utils/password.js';
+import { expectedAmountForTeamSize, totalSubmitted } from '../utils/fees.js';
 import { generateAdminToken } from '../middleware/authMiddleware.js';
 import { paymentService } from '../services/payment/PaymentService.js';
 import { excelService } from '../services/excelService.js';
@@ -21,8 +23,7 @@ export async function adminLogin(req, res) {
       a => a.email.toLowerCase() === email.toLowerCase().trim()
     );
 
-    // Accept default credentials: admin@adg.org / Deception@2026
-    if (!admin || (admin.passwordHash !== password && password !== 'Deception@2026')) {
+    if (!admin || !verifyPassword(password, admin.passwordHash)) {
       store.logAudit({
         actor: email,
         action: 'ADMIN_LOGIN_FAILED',
@@ -197,8 +198,16 @@ export async function getAdminPayments(req, res) {
   try {
     const enriched = store.payments.map(p => {
       const reg = store.registrations.find(r => r.registrationId === p.registrationId);
+      const expected = p.amountExpected || expectedAmountForTeamSize(reg?.teamSize);
+      const paid = totalSubmitted(p);
       return {
         ...p,
+        entries: Array.isArray(p.entries) ? p.entries : [],
+        amountExpected: expected,
+        amountPaid: paid,
+        amountRemaining: Math.max(0, expected - paid),
+        fullyPaid: paid >= expected,
+        teamSize: reg?.teamSize || 0,
         teamName: reg?.teamName || p.metadata?.teamName || 'Unknown Team',
         leaderName: reg?.leaderName || p.metadata?.customer?.name || 'Unknown',
         contactEmail: reg?.contactEmail || p.metadata?.customer?.email || 'N/A'

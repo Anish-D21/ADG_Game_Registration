@@ -3,12 +3,58 @@
  * @description Email notification service with SMTP support and in-memory audit log
  */
 
+import nodemailer from 'nodemailer';
 import { EVENT_CONFIG } from '../../../shared/eventConfig.js';
 import { store } from '../store/dataStore.js';
 
 export class EmailService {
   constructor() {
     this.emailLogs = [];
+    this.transporter = null;
+    this.initTransport();
+  }
+
+  /**
+   * Build an SMTP transport when credentials are configured. Without them the
+   * service still records every message in the log, so the app works end to end
+   * with mail simply disabled rather than throwing.
+   */
+  initTransport() {
+    const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD } = process.env;
+    if (!EMAIL_HOST || !EMAIL_USER || !EMAIL_PASSWORD) {
+      console.log('[EmailService] SMTP not configured - messages will be logged only, not sent.');
+      return;
+    }
+    const port = Number(EMAIL_PORT) || 587;
+    this.transporter = nodemailer.createTransport({
+      host: EMAIL_HOST,
+      port,
+      secure: port === 465,
+      auth: { user: EMAIL_USER, pass: EMAIL_PASSWORD }
+    });
+    console.log(`[EmailService] SMTP transport ready via ${EMAIL_HOST}:${port}`);
+  }
+
+  async deliver(record) {
+    if (!this.transporter) {
+      record.status = 'LOGGED_NOT_SENT';
+      return record;
+    }
+    try {
+      await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: record.to,
+        subject: record.subject,
+        text: record.body
+      });
+      record.status = 'SENT';
+    } catch (err) {
+      // A mail failure must never roll back a confirmed registration.
+      record.status = 'FAILED';
+      record.error = err.message;
+      console.error(`[EmailService] Delivery failed for ${record.to}:`, err.message);
+    }
+    return record;
   }
 
   logEmail(email) {
@@ -20,10 +66,12 @@ export class EmailService {
       registrationId: email.registrationId,
       body: email.body,
       sentAt: new Date(),
-      status: 'DELIVERED_PREVIEW'
+      status: 'QUEUED'
     };
     this.emailLogs.unshift(record);
-    console.log(`[EmailService] Dispatched ${email.type} to ${email.to}`);
+    console.log(`[EmailService] Queued ${email.type} for ${email.to}`);
+    // Fire and forget: delivery updates the record in place once it settles.
+    this.deliver(record);
     return record;
   }
 

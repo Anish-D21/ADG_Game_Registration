@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEventConfig } from '../services/useEventConfig.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { ShieldCheck, AlertOctagon, CheckCircle2 } from 'lucide-react';
 
@@ -7,6 +8,7 @@ interface RulesPageProps {
 }
 
 export const RulesPage: React.FC<RulesPageProps> = ({ setActiveTab }) => {
+  const { game } = useEventConfig();
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Title */}
@@ -24,7 +26,7 @@ export const RulesPage: React.FC<RulesPageProps> = ({ setActiveTab }) => {
 
       {/* Rules List */}
       <div className="space-y-4">
-        {EVENT_CONFIG.rules.map((rule, idx) => (
+        {game.rules.map((rule: any, idx: number) => (
           <div
             key={idx}
             className="bg-[#FFFDF0] border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] p-5 flex items-start gap-4"

@@ -59,20 +59,44 @@ router.get('/tickets/:registrationId', getTicketInfo);
 router.post('/documents/upload', (req, res) => {
   try {
     const { fileName, fileType, dataUrl, ownerName, documentType = 'ID_CARD' } = req.body;
-    
-    // In production with CLOUDINARY_API_KEY, upload to Cloudinary;
-    // In local dev, store as secure dataUrl or local asset link
+
+    if (!dataUrl || typeof dataUrl !== 'string') {
+      return res.status(400).json({ success: false, message: 'An image file is required.' });
+    }
+
+    // Only allow real images. Anything else is either a mistake or an attempt to
+    // park arbitrary content in the store.
+    const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+    const header = dataUrl.slice(0, 64).match(/^data:([^;]+);base64,/);
+    if (!header || !ALLOWED.includes(header[1].toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: `Unsupported file type. Please upload a JPG, PNG or WEBP image.`
+      });
+    }
+
+    // Cap the payload. Uploads are held in memory, so without a limit a handful of
+    // large files can exhaust the process.
+    const MAX_BYTES = 5 * 1024 * 1024;
+    const approxBytes = Math.floor((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75);
+    if (approxBytes > MAX_BYTES) {
+      return res.status(413).json({
+        success: false,
+        message: `File is too large (${(approxBytes / 1024 / 1024).toFixed(1)}MB). Maximum is 5MB.`
+      });
+    }
+
     const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const url = dataUrl || `https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80`;
 
     const docRecord = {
       _id: docId,
       documentType,
       referenceId: req.body.referenceId || docId,
       ownerName: ownerName || 'Participant',
-      url,
+      url: dataUrl,
       publicId: `uploads/${fileName || 'file'}`,
-      mimeType: fileType || 'image/jpeg',
+      mimeType: header[1],
+      sizeBytes: approxBytes,
       createdAt: new Date()
     };
 
@@ -80,7 +104,7 @@ router.post('/documents/upload', (req, res) => {
 
     return res.json({
       success: true,
-      url,
+      url: docRecord.url,
       publicId: docRecord.publicId,
       document: docRecord
     });
@@ -104,12 +128,12 @@ router.get('/admin/teams', authenticateAdmin, getAdminTeams);
 router.get('/admin/payments', authenticateAdmin, getAdminPayments);
 router.post('/admin/payments/:paymentId/verify', authenticateAdmin, verifyPayment);
 router.post('/admin/payments/:paymentId/reject', authenticateAdmin, rejectPayment);
-router.get('/admin/export/all', exportAllExcel);
-router.get('/admin/export/excel', exportAllExcel);
-router.get('/admin/export/teams', exportTeamsExcel);
-router.get('/admin/exports/teams', exportTeamsExcel);
-router.get('/admin/export/students', exportStudentsExcel);
-router.get('/admin/export/payments', exportPaymentsExcel);
+router.get('/admin/export/all', authenticateAdmin, exportAllExcel);
+router.get('/admin/export/excel', authenticateAdmin, exportAllExcel);
+router.get('/admin/export/teams', authenticateAdmin, exportTeamsExcel);
+router.get('/admin/exports/teams', authenticateAdmin, exportTeamsExcel);
+router.get('/admin/export/students', authenticateAdmin, exportStudentsExcel);
+router.get('/admin/export/payments', authenticateAdmin, exportPaymentsExcel);
 router.get('/admin/audit-logs', authenticateAdmin, getAuditLogs);
 router.get('/admin/email-logs', authenticateAdmin, getEmailLogs);
 
