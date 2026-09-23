@@ -92,6 +92,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   }, []);
   const [utrNumber, setUtrNumber] = useState('');
   const [utrProofUrl, setUtrProofUrl] = useState('');
+  const [proofUploading, setProofUploading] = useState(false);
+  const [proofName, setProofName] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
   const [payerName, setPayerName] = useState('');
@@ -273,6 +275,41 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       } catch (err: any) {
         // Fallback to dataUrl directly
         updatePlayerField(idx, 'idCardUrl', dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Payment screenshot. Goes through the same upload endpoint as the ID cards, so it
+  // lands in Drive when that is configured and stays inline when it is not.
+  const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Screenshot is too large. Maximum size is 5MB.');
+      return;
+    }
+    setProofUploading(true);
+    setErrorMsg(null);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      try {
+        const res = await uploadDocument({
+          fileName: file.name,
+          fileType: file.type,
+          dataUrl,
+          ownerName: payerName.trim() || 'Payment proof',
+          registrationId: createdRegistration?.registrationId || ''
+        });
+        setUtrProofUrl(res.url);
+        setProofName(file.name);
+      } catch {
+        // Keep the image itself rather than losing the evidence entirely.
+        setUtrProofUrl(dataUrl);
+        setProofName(file.name);
+      } finally {
+        setProofUploading(false);
       }
     };
     reader.readAsDataURL(file);
@@ -1295,12 +1332,20 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                     Payment Proof / Screenshot (Optional)
                   </label>
                   <input
-                    type="text"
-                    value={utrProofUrl}
-                    onChange={(e) => setUtrProofUrl(e.target.value)}
-                    placeholder="Screenshot URL (e.g. Cloudinary link or leave blank for default sample)"
-                    className="w-full px-3 py-2 bg-[#FFFDF0] border-2 border-[#111827] text-xs font-mono"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleProofUpload}
+                    disabled={proofUploading}
+                    className="w-full px-3 py-2 bg-[#FFFDF0] border-2 border-[#111827] text-xs file:mr-3 file:px-3 file:py-1 file:border-2 file:border-[#111827] file:bg-[#F7E8B5] file:font-bold file:text-xs disabled:opacity-50"
                   />
+                  {proofUploading && (
+                    <p className="text-xs text-[#111827]/60 mt-1">Uploading…</p>
+                  )}
+                  {!proofUploading && utrProofUrl && (
+                    <p className="text-xs text-[#2E7D32] mt-1">
+                      ✓ {proofName || 'Screenshot'} attached
+                    </p>
+                  )}
                 </div>
 
                 <button

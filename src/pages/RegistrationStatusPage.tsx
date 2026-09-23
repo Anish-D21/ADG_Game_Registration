@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchGameInfo } from '../services/api.ts';
+import { fetchGameInfo, uploadDocument } from '../services/api.ts';
 import { fetchRegistration, simulateMockPayment, submitManualUpi } from '../services/api.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { jsPDF } from 'jspdf';
@@ -37,6 +37,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   // Payment Modal if pending
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [utrInput, setUtrInput] = useState('');
+  const [utrProof, setUtrProof] = useState('');
+  const [utrProofName, setUtrProofName] = useState('');
+  const [utrProofUploading, setUtrProofUploading] = useState(false);
   const [payCfg, setPayCfg] = useState<any>({ mockEnabled: false, upiVpa: '' });
   const [utrAmount, setUtrAmount] = useState('');
   const [utrPayer, setUtrPayer] = useState('');
@@ -91,6 +94,39 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
       .catch(() => setPayCfg({ mockEnabled: false, upiVpa: '' }));
   }, []);
 
+  // Payment screenshot, routed through the shared upload endpoint so it reaches
+  // Drive when configured and stays inline otherwise.
+  const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !registration) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Screenshot is too large. Maximum size is 5MB.');
+      return;
+    }
+    setUtrProofUploading(true);
+    setErrorMsg(null);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      try {
+        const res = await uploadDocument({
+          fileName: file.name,
+          fileType: file.type,
+          dataUrl,
+          ownerName: utrPayer.trim() || registration.leaderName || 'Payment proof',
+          registrationId: registration.registrationId
+        });
+        setUtrProof(res.url);
+      } catch {
+        setUtrProof(dataUrl);
+      } finally {
+        setUtrProofName(file.name);
+        setUtrProofUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Manual UPI submit handler from Status page
   const handleUpiSubmit = async () => {
     if (!registration) return;
@@ -108,12 +144,15 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
       const res = await submitManualUpi(registration.registrationId, {
         transactionReference: utrInput.trim(),
         amount: amt,
-        payerName: utrPayer.trim()
+        payerName: utrPayer.trim(),
+        evidenceUrl: utrProof || ''
       });
       await loadRegistration(registration.registrationId);
       setUtrInput('');
       setUtrAmount('');
       setUtrPayer('');
+      setUtrProof('');
+      setUtrProofName('');
       // Members may pay separately, so keep the form open until the squad is covered.
       if (res.fullyPaid) setShowPaymentModal(false);
       else setErrorMsg(`₹${res.amountPaid} of ₹${res.amountExpected} received — ₹${res.remaining} still to go.`);
@@ -604,6 +643,22 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                     placeholder="Who paid? (optional)"
                     className="w-full px-3 py-2 bg-white border-2 border-[#111827] text-xs"
                   />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#111827] mb-1">
+                    Payment screenshot (optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleProofUpload}
+                    disabled={utrProofUploading}
+                    className="w-full px-2 py-1.5 bg-white border-2 border-[#111827] text-[11px] file:mr-2 file:px-2 file:py-0.5 file:border file:border-[#111827] file:bg-[#F7E8B5] file:text-[11px] disabled:opacity-50"
+                  />
+                  {utrProofUploading && <p className="text-[11px] text-gray-600 mt-1">Uploading…</p>}
+                  {!utrProofUploading && utrProof && (
+                    <p className="text-[11px] text-[#2E7D32] mt-1">✓ {utrProofName} attached</p>
+                  )}
                 </div>
                 <button
                   onClick={handleUpiSubmit}
