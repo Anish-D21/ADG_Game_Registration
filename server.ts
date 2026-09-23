@@ -42,6 +42,17 @@ async function startServer() {
     console.warn('[Persistence] No database connected - data will be LOST on restart.');
   }
 
+  // Surface a broken payment configuration at boot rather than when a student
+  // reaches the payment step and finds a QR pointing nowhere.
+  if (process.env.MOCK_PAYMENT !== 'true') {
+    const vpa = (process.env.UPI_VPA || '').trim();
+    if (!/^[\w.\-]{2,256}@[a-zA-Z]{2,64}$/.test(vpa)) {
+      console.error(`[Payments] UPI_VPA is missing or malformed ("${vpa || 'empty'}"). Students will NOT be able to pay.`);
+    } else {
+      console.log(`[Payments] Live UPI payments to ${vpa}`);
+    }
+  }
+
   // Anything that is not a read may have changed the store, so write it back once the
   // response is on its way out. This is what makes a restart non-destructive.
   app.use((req, res, next) => {

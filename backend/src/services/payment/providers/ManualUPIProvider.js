@@ -8,7 +8,15 @@ export class ManualUPIProvider extends PaymentProvider {
 
   async createPayment({ registrationId, amount, currency = 'INR', customer }) {
     const paymentId = `PAY_UPI_${Date.now()}`;
-    const vpa = process.env.UPI_VPA || 'adg.deception@sbi';
+    const vpa = (process.env.UPI_VPA || '').trim();
+
+    // A malformed or missing VPA means the QR and every deep link point at an address
+    // nobody owns, and the money is simply gone. Fail loudly here instead.
+    if (!/^[\w.\-]{2,256}@[a-zA-Z]{2,64}$/.test(vpa)) {
+      throw new Error(
+        `UPI_VPA is not a valid UPI ID (got "${vpa || 'empty'}"). Payments are disabled until it is corrected.`
+      );
+    }
     const payee = encodeURIComponent(process.env.UPI_PAYEE_NAME || 'ADG DECEPTION');
     // tn (note) and tr (reference) both carry the registration ID so the payment is
     // identifiable in the bank statement when the organiser reconciles.

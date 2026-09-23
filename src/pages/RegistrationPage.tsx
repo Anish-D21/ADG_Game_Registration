@@ -5,8 +5,10 @@ import {
   createRegistration, 
   uploadDocument, 
   simulateMockPayment, 
-  submitManualUpi 
+  submitManualUpi,
+  createPaymentOrder
 } from '../services/api.ts';
+import QRCode from 'qrcode';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { 
   Users, 
@@ -73,6 +75,12 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdRegistration, setCreatedRegistration] = useState<any>(null);
+  // Real payment details from the server: the UPI target, the deep-link URI and a
+  // scannable QR built from it. Never hardcode a VPA in the UI - if it drifts from
+  // the configured one, students pay into an address nobody owns.
+  const [payOrder, setPayOrder] = useState<any>(null);
+  const [qrImage, setQrImage] = useState('');
+  const [copiedVpa, setCopiedVpa] = useState(false);
 
   // Step 5 Payment State
   const { payment: payCfg, money } = useEventConfig();
@@ -314,6 +322,47 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
     };
     reader.readAsDataURL(file);
   };
+
+  // Ask the server for the payment details once the squad exists, then render the QR
+  // from exactly the string a UPI app will read - so what is scanned and what is
+  // configured can never disagree.
+  useEffect(() => {
+    if (!createdRegistration?.registrationId || payOrder) return;
+    let alive = true;
+    createPaymentOrder({
+      registrationId: createdRegistration.registrationId,
+      preferredMethod: 'MANUAL_UPI'
+    })
+      .then(async (order) => {
+        if (!alive || !order?.qrData) return;
+        setPayOrder(order);
+        try {
+          setQrImage(await QRCode.toDataURL(order.qrData, { width: 320, margin: 1 }));
+        } catch {
+          setQrImage('');
+        }
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [createdRegistration, payOrder]);
+
+  const copyVpa = () => {
+    if (!payOrder?.vpa) return;
+    navigator.clipboard?.writeText(payOrder.vpa);
+    setCopiedVpa(true);
+    setTimeout(() => setCopiedVpa(false), 1800);
+  };
+
+  // A phone cannot scan its own screen, so the deep links are the primary path on
+  // mobile and the QR is for someone paying from a second device.
+  const upiApps = payOrder?.upiUrl
+    ? [
+        { label: 'Google Pay', href: payOrder.upiUrl.replace('upi://', 'tez://upi/') },
+        { label: 'PhonePe', href: payOrder.upiUrl.replace('upi://', 'phonepe://') },
+        { label: 'Paytm', href: payOrder.upiUrl.replace('upi://', 'paytmmp://') },
+        { label: 'Any UPI app', href: payOrder.upiUrl }
+      ]
+    : [];
 
   // Step Navigation
   const nextStep = () => {
@@ -1252,20 +1301,69 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             <div className="p-4 sm:p-6 bg-[#FFFDF0] border-2 sm:border-3 border-[#111827] space-y-4 sm:space-y-5">
               <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 border-b-2 border-[#111827] pb-4 text-center sm:text-left">
                 <div className="w-32 h-32 sm:w-36 sm:h-36 bg-white border-2 sm:border-3 border-[#111827] p-2 flex items-center justify-center shrink-0 shadow-[2px_2px_0_0_#111827] mx-auto sm:mx-0">
-                  {/* Decorative QR code graphic */}
-                  <div className="w-full h-full bg-[#111827] p-1 flex flex-col items-center justify-center text-[#F4C430]">
-                    <QrCode className="w-16 h-16 sm:w-20 sm:h-20 text-white" />
-                    <span className="text-[8px] font-pixel text-white mt-1">UPI: adg.deception@sbi</span>
+                  {/* Real, scannable QR built from the exact URI a UPI app reads */}
+                  <div className="w-full bg-white p-2 border-2 border-[#111827] flex flex-col items-center justify-center">
+                    {qrImage ? (
+                      <img
+                        src={qrImage}
+                        alt={`UPI QR to pay ${payOrder?.vpa || ''}`}
+                        className="w-36 h-36 sm:w-44 sm:h-44"
+                      />
+                    ) : (
+                      <div className="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center">
+                        <span className="text-[10px] font-pixel text-[#111827]/50 text-center px-2">
+                          PREPARING QR…
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-1.5 sm:space-y-2 text-xs font-body">
-                  <h4 className="font-pixel text-xs text-[#E5005A]">SCAN & PAY ₹500 VIA ANY UPI APP</h4>
-                  <p className="text-[#111827]">
-                    VPA: <strong className="font-mono bg-[#F7E8B5] px-1 border border-[#111827] break-all">adg.deception@sbi</strong>
+                <div className="space-y-2 text-xs font-body">
+                  <h4 className="font-pixel text-xs text-[#E5005A]">
+                    PAY {money(payCfg.perHeadAmount * (players.length || 0))} FOR YOUR SQUAD
+                  </h4>
+                  <p className="text-[#111827]/70 text-[11px]">
+                    Pay your own share or the whole squad amount — whatever you transfer,
+                    enter that figure below.
                   </p>
-                  <p className="text-[#111827]">Account Name: <strong className="font-bold">AI Developers Group SFIT</strong></p>
-                  <p className="text-[#111827]/80">Remark / Note: <strong className="font-mono break-all">{createdRegistration.registrationId}</strong></p>
+
+                  {/* On a phone the QR is useless (you cannot scan your own screen),
+                      so tapping straight into a UPI app is the primary route. */}
+                  {upiApps.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      {upiApps.map(app => (
+                        <a
+                          key={app.label}
+                          href={app.href}
+                          className="text-center font-bold text-[11px] py-2.5 border-2 border-[#111827] bg-[#F7E8B5] hover:bg-[#E5005A] hover:text-white transition-colors"
+                        >
+                          {app.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Always show the raw UPI ID: it works even if every deep link and
+                      the QR fail, and it lets the payer confirm where the money goes. */}
+                  <div className="pt-1">
+                    <p className="text-[10px] uppercase tracking-wide font-bold text-[#111827]/50">
+                      Or pay this UPI ID manually
+                    </p>
+                    <button
+                      type="button"
+                      onClick={copyVpa}
+                      title="Tap to copy"
+                      className="mt-1 w-full font-mono text-xs bg-[#F7E8B5] px-2 py-2 border-2 border-[#111827] break-all text-left hover:bg-[#F4C430]"
+                    >
+                      {payOrder?.vpa || 'loading…'}
+                      {copiedVpa && <span className="ml-2 text-[#2E7D32] font-bold">copied</span>}
+                    </button>
+                  </div>
+
+                  <p className="text-[#111827]/80 text-[11px]">
+                    Reference / note: <strong className="font-mono break-all">{createdRegistration.registrationId}</strong>
+                  </p>
                 </div>
               </div>
 
