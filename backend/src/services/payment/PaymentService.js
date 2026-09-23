@@ -9,7 +9,7 @@ import { ManualUPIProvider } from './providers/ManualUPIProvider.js';
 import { RazorpayStubProvider } from './providers/RazorpayStubProvider.js';
 import { PaymentStatus, RegistrationStatus } from '../../../../shared/payment-contract/payment-status.js';
 import { store } from '../../store/dataStore.js';
-import { expectedAmountForTeamSize, totalSubmitted, isFullyPaid } from '../../utils/fees.js';
+import { expectedAmountForTeamSize, totalSubmitted, isFullyPaid, maxSingleEntry, MAX_ENTRIES } from '../../utils/fees.js';
 import { ticketService } from '../ticketService.js';
 import { emailService } from '../emailService.js';
 
@@ -107,10 +107,18 @@ export class PaymentService {
    * squad moves to verification once the submitted total covers what it owes; until
    * then it stays open so the remaining members can still pay.
    */
-  async submitManualUpiEvidence({ registrationId, transactionReference, amount, payerName, evidenceUrl, evidencePublicId }) {
+  async submitManualUpiEvidence({ registrationId, transactionReference, amount, payerName, contactEmail, evidenceUrl, evidencePublicId }) {
     const reg = store.registrations.find(r => r.registrationId === registrationId);
     if (!reg) {
       throw new Error(`Registration "${registrationId}" was not found.`);
+    }
+
+    // Registration IDs are sequential and guessable, so prove this submission comes
+    // from the squad rather than someone counting upwards. The public lookup only
+    // returns a masked email, so knowing it in full is the check.
+    const claimed = String(contactEmail || '').trim().toLowerCase();
+    if (!claimed || claimed !== String(reg.contactEmail || '').trim().toLowerCase()) {
+      throw new Error("Enter the team leader's email address exactly as used during registration.");
     }
     const expected = expectedAmountForTeamSize(reg.teamSize);
 
@@ -146,9 +154,20 @@ export class PaymentService {
       throw new Error(`Reference ${normalised} has already been submitted for this team.`);
     }
 
-    const value = Number(amount);
+    const value = Math.round(Number(amount) * 100) / 100;
     if (!Number.isFinite(value) || value <= 0) {
       throw new Error('Enter the amount you paid, in rupees.');
+    }
+    const cap = maxSingleEntry(expected);
+    if (value > cap) {
+      throw new Error(
+        `That amount (₹${value}) is more than this squad owes (₹${expected}). Enter only what you actually transferred.`
+      );
+    }
+    if (payment.entries.length >= MAX_ENTRIES) {
+      throw new Error(
+        `This squad already has ${MAX_ENTRIES} recorded payments. Please contact the organisers rather than submitting more.`
+      );
     }
 
     payment.entries.push({
@@ -250,6 +269,13 @@ export class PaymentService {
     }
 
     payment.status = PaymentStatus.REJECTED;
+    // Mark the entries rejected too, otherwise they keep counting towards the total:
+    // the squad would still read "fully covered" and could be ticked straight through
+    // on the next pass. A rejected squad must submit fresh evidence.
+    if (Array.isArray(payment.entries)) {
+      payment.entries.forEach(e => { e.status = 'REJECTED'; });
+    }
+    payment.amountPaid = 0;
     payment.verifiedAt = new Date();
     payment.verifiedBy = adminUser;
     payment.metadata = { ...payment.metadata, rejectionReason: reason };

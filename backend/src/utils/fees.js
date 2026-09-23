@@ -30,6 +30,20 @@ export function expectedAmountForTeamSize(teamSize) {
   return perHeadAmount() * size;
 }
 
+/**
+ * A single payment may not wildly exceed what the squad owes. Without this a student
+ * can type any figure, the desk reads "fully covered", and a busy organiser ticks it
+ * through. The margin allows for genuine overpayment while blocking nonsense.
+ */
+export const OVERPAY_MARGIN = 1.25;
+
+export function maxSingleEntry(expected) {
+  return Math.ceil(Number(expected || 0) * OVERPAY_MARGIN);
+}
+
+/** Guards against an unbounded ledger on one squad. */
+export const MAX_ENTRIES = 15;
+
 /** Sum of the entries an organiser has not rejected. */
 export function totalSubmitted(payment) {
   if (!payment || !Array.isArray(payment.entries)) return 0;

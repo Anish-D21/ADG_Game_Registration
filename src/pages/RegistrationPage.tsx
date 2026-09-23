@@ -387,6 +387,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         transactionReference: utrNumber.trim(),
         amount: amt,
         payerName: payerName.trim(),
+        // Proves the submission belongs to this squad. Taken from the form, so the
+        // student never has to type it again here.
+        contactEmail: createdRegistration?.contactEmail || players[0]?.email || '',
         evidenceUrl: utrProofUrl || ''
       });
       setPaySummary(res);

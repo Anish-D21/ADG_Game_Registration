@@ -84,6 +84,25 @@ export async function createRegistration(req, res) {
   }
 }
 
+/**
+ * Registration IDs run in sequence, so this endpoint can be walked. It must not hand
+ * out contact details in full or every team leader's email and phone can be harvested
+ * by counting upwards. Masked values still let a student recognise their own squad,
+ * and knowing the FULL email is what proves ownership when submitting a payment.
+ */
+function maskEmail(email) {
+  const [user = '', domain = ''] = String(email || '').split('@');
+  if (!domain) return '';
+  const head = user.slice(0, 2);
+  return `${head}${'*'.repeat(Math.max(3, user.length - 2))}@${domain}`;
+}
+
+function maskMobile(mobile) {
+  const digits = String(mobile || '').replace(/\D/g, '');
+  if (digits.length < 4) return '';
+  return `${'*'.repeat(digits.length - 4)}${digits.slice(-4)}`;
+}
+
 export async function getRegistration(req, res) {
   try {
     const { id } = req.params;
@@ -93,9 +112,28 @@ export async function getRegistration(req, res) {
       return res.status(404).json({ success: false, message: `Registration with ID "${id}" was not found.` });
     }
 
+    const safe = { ...details };
+    if (safe.registration) {
+      safe.registration = {
+        ...safe.registration,
+        contactEmail: maskEmail(safe.registration.contactEmail),
+        contactMobile: maskMobile(safe.registration.contactMobile)
+      };
+    }
+    // Player rows carry the same details for the whole squad.
+    for (const key of ['students', 'players', 'members']) {
+      if (Array.isArray(safe[key])) {
+        safe[key] = safe[key].map(pl => ({
+          ...pl,
+          email: maskEmail(pl.email),
+          mobile: maskMobile(pl.mobile)
+        }));
+      }
+    }
+
     return res.json({
       success: true,
-      ...details
+      ...safe
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

@@ -50,7 +50,7 @@ export async function getPaymentStatus(req, res) {
 export async function submitManualUpi(req, res) {
   try {
     const { registrationId } = req.params;
-    const { transactionReference, evidenceUrl, evidencePublicId, amount, payerName } = req.body;
+    const { transactionReference, evidenceUrl, evidencePublicId, amount, payerName, contactEmail } = req.body;
 
     const utr = String(transactionReference || '').replace(/[\s\-]/g, '');
     // UPI UTR/RRN is 12 digits. Bank transaction IDs vary, so allow 12-22
@@ -69,6 +69,7 @@ export async function submitManualUpi(req, res) {
       transactionReference: utr,
       amount,
       payerName,
+      contactEmail,
       evidenceUrl,
       evidencePublicId
     });

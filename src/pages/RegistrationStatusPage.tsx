@@ -38,6 +38,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [utrInput, setUtrInput] = useState('');
   const [utrProof, setUtrProof] = useState('');
+  const [utrEmail, setUtrEmail] = useState('');
   const [utrProofName, setUtrProofName] = useState('');
   const [utrProofUploading, setUtrProofUploading] = useState(false);
   const [payCfg, setPayCfg] = useState<any>({ mockEnabled: false, upiVpa: '' });
@@ -145,6 +146,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
         transactionReference: utrInput.trim(),
         amount: amt,
         payerName: utrPayer.trim(),
+        contactEmail: utrEmail.trim(),
         evidenceUrl: utrProof || ''
       });
       await loadRegistration(registration.registrationId);
@@ -153,6 +155,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
       setUtrPayer('');
       setUtrProof('');
       setUtrProofName('');
+      setUtrEmail('');
       // Members may pay separately, so keep the form open until the squad is covered.
       if (res.fullyPaid) setShowPaymentModal(false);
       else setErrorMsg(`₹${res.amountPaid} of ₹${res.amountExpected} received — ₹${res.remaining} still to go.`);
@@ -628,6 +631,18 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                   placeholder="Enter 12-digit UTR (e.g. 426189012345)"
                   className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-xs"
                 />
+                <div>
+                  <label className="block text-[11px] font-bold text-[#111827] mb-1">
+                    Team leader's email (confirms this is your squad)
+                  </label>
+                  <input
+                    type="email"
+                    value={utrEmail}
+                    onChange={(e) => setUtrEmail(e.target.value)}
+                    placeholder="leader@student.sfit.ac.in"
+                    className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] text-xs"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="number" min="1" step="1"
