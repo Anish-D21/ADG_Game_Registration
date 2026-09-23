@@ -24,6 +24,7 @@ import {
 } from '../controllers/adminController.js';
 import { authenticateAdmin } from '../middleware/authMiddleware.js';
 import { store } from '../store/dataStore.js';
+import { uploadToDrive, isConfigured as driveConfigured } from '../services/driveService.js';
 
 const router = express.Router();
 
@@ -56,9 +57,9 @@ router.get('/tickets/:registrationId', getTicketInfo);
 // ==========================================
 // 5. DOCUMENT UPLOAD (Cloudinary / File simulation)
 // ==========================================
-router.post('/documents/upload', (req, res) => {
+router.post('/documents/upload', async (req, res) => {
   try {
-    const { fileName, fileType, dataUrl, ownerName, documentType = 'ID_CARD' } = req.body;
+    const { fileName, fileType, dataUrl, ownerName, documentType = 'ID_CARD', registrationId } = req.body;
 
     if (!dataUrl || typeof dataUrl !== 'string') {
       return res.status(400).json({ success: false, message: 'An image file is required.' });
@@ -75,8 +76,7 @@ router.post('/documents/upload', (req, res) => {
       });
     }
 
-    // Cap the payload. Uploads are held in memory, so without a limit a handful of
-    // large files can exhaust the process.
+    // Cap the payload. Without a limit a handful of large files can exhaust the process.
     const MAX_BYTES = 5 * 1024 * 1024;
     const approxBytes = Math.floor((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75);
     if (approxBytes > MAX_BYTES) {
@@ -88,12 +88,36 @@ router.post('/documents/upload', (req, res) => {
 
     const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
+    // Prefer Google Drive so the images live somewhere browsable and do not sit in
+    // the database. A failure here is not fatal: we fall back to keeping the image
+    // inline so a student is never blocked from registering by a storage problem.
+    let storedUrl = dataUrl;
+    let storage = 'INLINE';
+    let driveFileId = '';
+
+    if (driveConfigured()) {
+      const uploaded = await uploadToDrive({
+        dataUrl,
+        mimeType: header[1],
+        ownerName,
+        registrationId
+      });
+      if (uploaded) {
+        storedUrl = uploaded.url;
+        driveFileId = uploaded.fileId;
+        storage = 'GOOGLE_DRIVE';
+      }
+    }
+
     const docRecord = {
       _id: docId,
       documentType,
       referenceId: req.body.referenceId || docId,
       ownerName: ownerName || 'Participant',
-      url: dataUrl,
+      registrationId: registrationId || '',
+      url: storedUrl,
+      driveFileId,
+      storage,
       publicId: `uploads/${fileName || 'file'}`,
       mimeType: header[1],
       sizeBytes: approxBytes,
@@ -106,6 +130,7 @@ router.post('/documents/upload', (req, res) => {
       success: true,
       url: docRecord.url,
       publicId: docRecord.publicId,
+      storage,
       document: docRecord
     });
   } catch (err) {

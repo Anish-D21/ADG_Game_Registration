@@ -72,7 +72,7 @@ export async function simulateMockPayment(registrationId: string) {
   return res.json();
 }
 
-export async function uploadDocument(data: { fileName: string; fileType: string; dataUrl: string; ownerName?: string }) {
+export async function uploadDocument(data: { fileName: string; fileType: string; dataUrl: string; ownerName?: string; registrationId?: string }) {
   const res = await fetch(`${API_BASE}/documents/upload`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

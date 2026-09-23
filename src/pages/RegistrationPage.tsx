@@ -262,7 +262,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
           fileName: file.name,
           fileType: file.type,
           dataUrl,
-          ownerName: players[idx].fullName || `Player ${idx + 1}`
+          ownerName: players[idx].fullName || `Player ${idx + 1}`,
+          // Names the file usefully in Drive. Empty before the squad is created,
+          // which is fine - the player's name still identifies it.
+          registrationId: createdRegistration?.registrationId || teamName || ''
         });
 
         updatePlayerField(idx, 'idCardUrl', uploadRes.url);

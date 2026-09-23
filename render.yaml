@@ -60,6 +60,14 @@ services:
       - key: SEED_DEMO_DATA
         value: "false"
 
+      # ---- ID card storage (optional) ----
+      # Deploy scripts/drive-upload.gs under the ADG Google account and paste its
+      # /exec URL here. Without these, ID cards are kept in the database instead.
+      - key: DRIVE_UPLOAD_URL
+        sync: false
+      - key: DRIVE_UPLOAD_TOKEN
+        sync: false
+
       # ---- email (optional) ----
       # Without these the app records every message but sends nothing, which is
       # safe: students can still look their ticket up on the Check Status page.

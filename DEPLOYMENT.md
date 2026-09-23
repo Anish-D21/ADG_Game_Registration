@@ -73,6 +73,7 @@ here and restart the service — no rebuild, and nothing to edit in the code.
 
 | Variable | Effect if unset |
 |---|---|
+| `DRIVE_UPLOAD_URL` / `DRIVE_UPLOAD_TOKEN` | ID cards are stored in the database instead of Google Drive. See "ID card storage" below. |
 | `EMAIL_HOST` / `EMAIL_USER` / `EMAIL_PASSWORD` / `EMAIL_FROM` | Emails are recorded but never sent. Nothing breaks: students can still look their ticket up on the Check Status page. Brevo's free tier gives 300/day. |
 | `SEED_DEMO_DATA` | Defaults to off, which is what you want. At `true` it loads sample registrations that pollute the dashboard, the exports and the revenue total. |
 
@@ -90,7 +91,36 @@ Never put any of these in the repo. `.env` is gitignored and should stay that wa
 
 ---
 
-## 5. Keeping it awake (optional)
+## 5. ID card storage in Google Drive (optional)
+
+By default the ID card images are kept in MongoDB. At roughly 350 students that is
+about 70 MB against Atlas's 512 MB, which fits, but the images are then awkward to
+browse.
+
+To put them in the ADG Google account's Drive instead:
+
+1. Sign in as the ADG account, open **script.google.com**, New project
+2. Paste `scripts/drive-upload.gs`
+3. Project Settings -> Script Properties -> add `UPLOAD_TOKEN` = a long random string
+4. Deploy -> New deployment -> **Web app**, Execute as **Me**, Access **Anyone**
+5. Authorise, copy the `/exec` URL
+6. Set `DRIVE_UPLOAD_URL` to that URL and `DRIVE_UPLOAD_TOKEN` to the same random
+   string on Render
+
+The script runs as the ADG account and writes to its own Drive, so the server never
+holds a Google credential. Access must be "Anyone" because Render calls it without a
+Google login; the token is what actually protects it.
+
+Uploaded files are left **private to that Drive** deliberately - they are student ID
+cards. To let a co-organiser review them, share the folder with that person from
+Drive rather than making the files public by link.
+
+If Drive is unreachable or the token is wrong, uploads fall back to storing the image
+in the database, so a student is never blocked from registering.
+
+---
+
+## 6. Keeping it awake (optional)
 
 Render's free tier sleeps a service after 15 minutes of no traffic, and the next
 visitor waits roughly 50 seconds while it boots. To avoid that during the
@@ -106,7 +136,7 @@ sees the page. Data is safe either way, because it lives in Atlas.
 
 ---
 
-## 6. Things that will bite you
+## 7. Things that will bite you
 
 **Restricting Atlas by IP.** Render's free tier has no fixed outbound address.
 The connection will hang and time out rather than fail with a clear message.
