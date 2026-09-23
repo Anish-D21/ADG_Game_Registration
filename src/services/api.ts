@@ -37,7 +37,7 @@ export async function fetchRegistration(id: string) {
   return json;
 }
 
-export async function createPaymentOrder(data: any) {
+export async function createPaymentOrder(data: { registrationId: string; preferredMethod?: string; amount?: number }) {
   const res = await fetch(`${API_BASE}/payments/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

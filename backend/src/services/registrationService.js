@@ -10,6 +10,7 @@ import { emailService } from './emailService.js';
 import { store } from '../store/dataStore.js';
 import { RegistrationStatus } from '../../../shared/payment-contract/payment-status.js';
 import { EVENT_CONFIG } from '../../../shared/eventConfig.js';
+import { expectedAmountForTeamSize, totalSubmitted } from '../utils/fees.js';
 
 export class RegistrationService {
   async registerTeam(data) {
@@ -191,11 +192,18 @@ export class RegistrationService {
     const studentIds = team ? team.memberIds : [];
     const members = store.students.filter(s => studentIds.includes(s._id) || studentIds.includes(String(s._id)));
 
+    // The squad needs to know what it still owes; derive it rather than letting the
+    // page guess, so the figure cannot drift from the server's own threshold.
+    const expected = expectedAmountForTeamSize(reg.teamSize);
+    const paid = payment ? totalSubmitted(payment) : 0;
+
     return {
       registration: reg,
       team,
       members,
-      payment,
+      payment: payment
+        ? { ...payment, amountExpected: expected, amountPaid: paid, amountRemaining: Math.max(0, expected - paid) }
+        : { amountExpected: expected, amountPaid: 0, amountRemaining: expected, entries: [], status: 'NOT_STARTED' },
       ticket,
       invoice
     };

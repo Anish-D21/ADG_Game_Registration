@@ -333,15 +333,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       registrationId: createdRegistration.registrationId,
       preferredMethod: 'MANUAL_UPI'
     })
-      .then(async (order) => {
-        if (!alive || !order?.qrData) return;
-        setPayOrder(order);
-        try {
-          setQrImage(await QRCode.toDataURL(order.qrData, { width: 320, margin: 1 }));
-        } catch {
-          setQrImage('');
-        }
-      })
+      .then((order) => { if (alive && order?.vpa) setPayOrder(order); })
       .catch(() => {});
     return () => { alive = false; };
   }, [createdRegistration, payOrder]);
@@ -355,12 +347,35 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
   // A phone cannot scan its own screen, so the deep links are the primary path on
   // mobile and the QR is for someone paying from a second device.
-  const upiApps = payOrder?.upiUrl
+  // The amount MUST be in the intent or UPI apps reject it, and it has to reflect the
+  // share this person is actually sending - so build the link from what they typed.
+  const payNow = Number(paidAmount) > 0
+    ? Number(paidAmount)
+    : payCfg.perHeadAmount * (players.length || 0);
+
+  const upiUri = payOrder?.vpa
+    ? `upi://pay?pa=${payOrder.vpa}` +
+      `&pn=${encodeURIComponent(payOrder.payeeName || 'ADG DECEPTION')}` +
+      (payNow > 0 ? `&am=${payNow.toFixed(2)}` : '') +
+      `&cu=INR&tn=${encodeURIComponent(payOrder.note || '')}`
+    : '';
+
+  useEffect(() => {
+    if (!upiUri) { setQrImage(''); return; }
+    let alive = true;
+    QRCode.toDataURL(upiUri, { width: 320, margin: 1 })
+      .then(u => { if (alive) setQrImage(u); })
+      .catch(() => { if (alive) setQrImage(''); });
+    return () => { alive = false; };
+  }, [upiUri]);
+
+  // The plain upi:// intent is the one verified against a real payment; the branded
+  // schemes are a convenience and must never be the only route offered.
+  const upiApps = upiUri
     ? [
-        { label: 'Google Pay', href: payOrder.upiUrl.replace('upi://', 'tez://upi/') },
-        { label: 'PhonePe', href: payOrder.upiUrl.replace('upi://', 'phonepe://') },
-        { label: 'Paytm', href: payOrder.upiUrl.replace('upi://', 'paytmmp://') },
-        { label: 'Any UPI app', href: payOrder.upiUrl }
+        { label: 'Google Pay', href: upiUri.replace('upi://', 'tez://upi/') },
+        { label: 'PhonePe', href: upiUri.replace('upi://', 'phonepe://') },
+        { label: 'Paytm', href: upiUri.replace('upi://', 'paytmmp://') }
       ]
     : [];
 
@@ -1330,18 +1345,26 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
                   {/* On a phone the QR is useless (you cannot scan your own screen),
                       so tapping straight into a UPI app is the primary route. */}
+                  {upiUri && (
+                    <a href={upiUri}
+                      className="block text-center font-arcade text-xs py-3.5 border-2 border-[#111827] bg-[#2E7D32] text-white shadow-[3px_3px_0_0_#111827] hover:brightness-110">
+                      PAY {money(payNow)} WITH ANY UPI APP
+                    </a>
+                  )}
                   {upiApps.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      {upiApps.map(app => (
-                        <a
-                          key={app.label}
-                          href={app.href}
-                          className="text-center font-bold text-[11px] py-2.5 border-2 border-[#111827] bg-[#F7E8B5] hover:bg-[#E5005A] hover:text-white transition-colors"
-                        >
-                          {app.label}
-                        </a>
-                      ))}
-                    </div>
+                    <>
+                      <p className="text-[10px] text-center text-[#111827]/50 uppercase tracking-wide pt-1">
+                        or open a specific app
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {upiApps.map(app => (
+                          <a key={app.label} href={app.href}
+                            className="text-center font-bold text-[10px] py-2 border-2 border-[#111827] bg-[#F7E8B5] hover:bg-[#E5005A] hover:text-white transition-colors">
+                            {app.label}
+                          </a>
+                        ))}
+                      </div>
+                    </>
                   )}
 
                   {/* Always show the raw UPI ID: it works even if every deep link and
@@ -1370,15 +1393,22 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <div className="space-y-3">
                 <div>
                   <label className="block font-arcade text-xs font-bold text-[#111827] mb-1">
-                    Enter 12-Digit Bank UTR / Transaction Reference Number *
+                    12-Digit UPI Reference (UTR) *
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    pattern="[0-9]*"
                     value={utrNumber}
-                    onChange={(e) => { setUtrNumber(e.target.value); setErrorMsg(null); }}
-                    placeholder="e.g. 426189012345 or UPI-REF-9928"
-                    className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] font-mono text-xs sm:text-sm focus:outline-none"
+                    onChange={(e) => { setUtrNumber(e.target.value.replace(/[^0-9A-Za-z]/g, '')); setErrorMsg(null); }}
+                    placeholder="426189012345"
+                    className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#F7E8B5] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] font-mono text-base tracking-wider focus:outline-none"
                   />
+                  <p className="text-[10px] text-[#111827]/60 mt-1">
+                    In GPay tap the payment → <strong>UPI transaction ID</strong>. In PhonePe/Paytm
+                    it is on the receipt as <strong>UTR</strong>. Long-press to copy, then paste here.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

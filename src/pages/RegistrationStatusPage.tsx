@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { fetchGameInfo, uploadDocument } from '../services/api.ts';
-import { fetchRegistration, simulateMockPayment, submitManualUpi } from '../services/api.ts';
+import { fetchRegistration, simulateMockPayment, submitManualUpi, createPaymentOrder } from '../services/api.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { jsPDF } from 'jspdf';
+import QRCode from 'qrcode';
 import { 
   Search, 
   CheckCircle2, 
@@ -39,6 +40,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   const [utrInput, setUtrInput] = useState('');
   const [utrProof, setUtrProof] = useState('');
   const [utrEmail, setUtrEmail] = useState('');
+  const [payOrder, setPayOrder] = useState<any>(null);
+  const [qrImage, setQrImage] = useState('');
+  const [copiedVpa, setCopiedVpa] = useState(false);
   const [utrProofName, setUtrProofName] = useState('');
   const [utrProofUploading, setUtrProofUploading] = useState(false);
   const [payCfg, setPayCfg] = useState<any>({ mockEnabled: false, upiVpa: '' });
@@ -62,7 +66,18 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     setErrorMsg(null);
     try {
       const data = await fetchRegistration(id.trim());
-      setRegistration(data);
+      // The API nests the squad under `registration` and names the roster `members`,
+      // but this page reads a flat object with `players`. Without this reshape every
+      // field on the page - team name, status, registrationId, the pass - is
+      // undefined, and the UTR submission posts to /payments/undefined/manual-upi.
+      setRegistration({
+        ...(data.registration || {}),
+        team: data.team || null,
+        players: data.members || [],
+        payment: data.payment || null,
+        ticket: data.ticket || null,
+        invoice: data.invoice || null
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Registration not found with that code.');
       setRegistration(null);
@@ -96,6 +111,74 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
       .then(r => setPayCfg(r?.paymentConfig || { mockEnabled: false, upiVpa: '' }))
       .catch(() => setPayCfg({ mockEnabled: false, upiVpa: '' }));
   }, []);
+
+  // Members who did not fill the registration form pay from this page, so it needs
+  // the same QR and app links as the registration flow - not just a UPI ID to retype.
+  useEffect(() => {
+    if (!showPaymentModal || !registration?.registrationId || payOrder) return;
+    let alive = true;
+    createPaymentOrder({
+      registrationId: registration.registrationId,
+      preferredMethod: 'MANUAL_UPI',
+      amount: registration?.payment?.amountRemaining || undefined
+    })
+      .then(async (order) => {
+        if (!alive || !order?.qrData) return;
+        setPayOrder(order);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [showPaymentModal, registration, payOrder]);
+
+  // Spell out what is missing instead of failing silently when the button is pressed.
+  const missingFields = [
+    utrInput.trim().length < 6 ? 'the 12-digit UTR' : null,
+    !(Number(utrAmount) > 0) ? 'the amount you paid' : null,
+    !utrEmail.trim() ? "the team leader's email" : null
+  ].filter(Boolean) as string[];
+
+  const copyVpa = () => {
+    if (!payOrder?.vpa) return;
+    navigator.clipboard?.writeText(payOrder.vpa);
+    setCopiedVpa(true);
+    setTimeout(() => setCopiedVpa(false), 1800);
+  };
+
+  // Rebuild the intent for whatever the payer is actually sending. The amount must be
+  // present or most UPI apps refuse the link, and it has to match their share rather
+  // than always the squad total.
+  const payNow = Number(utrAmount) > 0
+    ? Number(utrAmount)
+    : Number(registration?.payment?.amountRemaining) || 0;
+
+  const upiUri = payOrder?.vpa
+    ? `upi://pay?pa=${payOrder.vpa}` +
+      `&pn=${encodeURIComponent(payOrder.payeeName || 'ADG DECEPTION')}` +
+      (payNow > 0 ? `&am=${payNow.toFixed(2)}` : '') +
+      // No `tr`: it marks the payment as a merchant transaction, which a personal
+      // VPA cannot satisfy, and the app rejects it. The squad ID travels in `tn`.
+      `&cu=INR&tn=${encodeURIComponent(payOrder.note || '')}`
+    : '';
+
+  useEffect(() => {
+    if (!upiUri) { setQrImage(''); return; }
+    let alive = true;
+    QRCode.toDataURL(upiUri, { width: 300, margin: 1 })
+      .then(u => { if (alive) setQrImage(u); })
+      .catch(() => { if (alive) setQrImage(''); });
+    return () => { alive = false; };
+  }, [upiUri]);
+
+  // The plain upi:// intent is the one verified against a real payment, so it leads.
+  // The app-specific schemes are a convenience: tez:// in particular is being retired
+  // in favour of the standard intent, so they must never be the only route offered.
+  const upiApps = upiUri
+    ? [
+        { label: 'Google Pay', href: upiUri.replace('upi://', 'tez://upi/') },
+        { label: 'PhonePe', href: upiUri.replace('upi://', 'phonepe://') },
+        { label: 'Paytm', href: upiUri.replace('upi://', 'paytmmp://') }
+      ]
+    : [];
 
   // Payment screenshot, routed through the shared upload endpoint so it reaches
   // Drive when configured and stays inline otherwise.
@@ -247,7 +330,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     startY += 20;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Amount Paid: Rs. ${payment.amount || 500} ${payment.currency || 'INR'}`, 20, startY);
+    doc.text(`Amount Paid: Rs. ${payment.amountPaid ?? payment.amount ?? 0} ${payment.currency || 'INR'}`, 20, startY);
     doc.text(`Payment Gateway Ref / UTR: ${payment.transactionReference || 'N/A'}`, 20, startY + 7);
     doc.text(`Payment Method: ${payment.provider || 'MOCK'}`, 20, startY + 14);
     doc.text(`Receipt Date: ${new Date(payment.completedAt || Date.now()).toLocaleString()}`, 20, startY + 21);
@@ -451,7 +534,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-[#E5005A] shrink-0" />
                 <h3 className="font-arcade text-sm sm:text-base font-bold text-[#111827]">
-                  PAYMENT PENDING (₹500)
+                  PAYMENT PENDING ({registration?.payment?.amountRemaining != null
+                    ? `₹${registration.payment.amountRemaining} remaining`
+                    : 'amount pending'})
                 </h3>
               </div>
               <p className="text-xs sm:text-sm font-body text-[#111827]/90 leading-relaxed">
@@ -461,7 +546,12 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                 onClick={() => setShowPaymentModal(true)}
                 className="w-full sm:w-auto bg-[#E5005A] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#111827]"
               >
-                <CreditCard className="w-4 h-4 shrink-0" /> COMPLETE SQUAD PAYMENT (₹500)
+                <CreditCard className="w-4 h-4 shrink-0" />
+                {registration?.payment?.amountRemaining > 0
+                  ? `PAY REMAINING ₹${registration.payment.amountRemaining}`
+                  : registration?.payment?.amountExpected
+                    ? `COMPLETE SQUAD PAYMENT (₹${registration.payment.amountExpected})`
+                    : 'COMPLETE SQUAD PAYMENT'}
               </button>
             </div>
           )}
@@ -619,23 +709,69 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                 <h4 className="font-arcade text-xs font-bold text-[#111827]">
                   Pay by UPI, then enter your reference
                 </h4>
-                <p className="text-gray-700">
-                  UPI ID: <strong className="font-mono">{payCfg.upiVpa || 'contact the organisers'}</strong>
+                <p className="text-[11px] text-[#111827]/70">
+                  Enter the amount you are paying below first — the buttons and QR are
+                  built from it. Leave it blank to pay the full remaining
+                  {registration?.payment?.amountRemaining ? ` ₹${registration.payment.amountRemaining}` : ''}.
                 </p>
+                <p className="text-[11px] font-bold">
+                  Paying now: ₹{payNow || 0}
+                </p>
+                {qrImage && (
+                  <div className="flex justify-center py-2">
+                    <img src={qrImage} alt="UPI QR" className="w-36 h-36 border-2 border-[#111827] bg-white p-1" />
+                  </div>
+                )}
+
+                {upiUri && (
+                  <a href={upiUri}
+                    className="block text-center font-arcade text-xs py-3.5 border-2 border-[#111827] bg-[#2E7D32] text-white shadow-[3px_3px_0_0_#111827] hover:brightness-110">
+                    PAY ₹{payNow || 0} WITH ANY UPI APP
+                  </a>
+                )}
+
+                {upiApps.length > 0 && (
+                  <>
+                    <p className="text-[10px] text-center text-[#111827]/50 uppercase tracking-wide">
+                      or open a specific app
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {upiApps.map(a => (
+                        <a key={a.label} href={a.href}
+                          className="text-center font-bold text-[10px] py-2 border-2 border-[#111827] bg-[#F7E8B5] hover:bg-[#E5005A] hover:text-white">
+                          {a.label}
+                        </a>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <button type="button" onClick={copyVpa}
+                  className="w-full font-mono text-[11px] bg-[#F7E8B5] px-2 py-2 border-2 border-[#111827] break-all text-left hover:bg-[#F4C430]">
+                  {payOrder?.vpa || payCfg.upiVpa || 'loading…'}
+                  {copiedVpa && <span className="ml-2 text-[#2E7D32] font-bold">copied</span>}
+                </button>
                 <p className="text-gray-600 text-[11px]">
                   Members may each pay their own share. Everyone who pays should submit
                   their own UTR and amount.
                 </p>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  pattern="[0-9]*"
                   value={utrInput}
-                  onChange={(e) => setUtrInput(e.target.value)}
-                  placeholder="Enter 12-digit UTR (e.g. 426189012345)"
-                  className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-xs"
+                  onChange={(e) => setUtrInput(e.target.value.replace(/[^0-9A-Za-z]/g, ''))}
+                  placeholder="426189012345"
+                  className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-base tracking-wider"
                 />
+                <p className="text-[10px] text-gray-600">
+                  GPay: tap the payment → <strong>UPI transaction ID</strong>. PhonePe/Paytm:
+                  on the receipt as <strong>UTR</strong>. Long-press to copy.
+                </p>
                 <div>
                   <label className="block text-[11px] font-bold text-[#111827] mb-1">
-                    Team leader's email (confirms this is your squad)
+                    Team leader's email * (confirms this is your squad)
                   </label>
                   <input
                     type="email"
@@ -650,7 +786,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                     type="number" min="1" step="1"
                     value={utrAmount}
                     onChange={(e) => setUtrAmount(e.target.value)}
-                    placeholder="Amount paid (₹)"
+                    placeholder="Amount paid (₹) *"
                     className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-xs"
                   />
                   <input
@@ -677,9 +813,21 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                     <p className="text-[11px] text-[#2E7D32] mt-1">✓ {utrProofName} attached</p>
                   )}
                 </div>
+                {/* The page-level error banner sits behind this overlay, so a failed
+                    validation looked like a dead button. Show it here too. */}
+                {errorMsg && (
+                  <div className="p-2.5 border-2 border-[#C62828] bg-[#C62828]/10 text-[#C62828] text-[11px] font-bold">
+                    {errorMsg}
+                  </div>
+                )}
+                {missingFields.length > 0 && (
+                  <p className="text-[11px] text-[#C62828] font-bold">
+                    Still needed: {missingFields.join(', ')}
+                  </p>
+                )}
                 <button
                   onClick={handleUpiSubmit}
-                  disabled={paymentActionLoading}
+                  disabled={paymentActionLoading || missingFields.length > 0}
                   className="w-full bg-[#E5005A] text-white font-arcade text-xs py-2.5 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]"
                 >
                   {paymentActionLoading ? 'SUBMITTING...' : 'SUBMIT UTR NUMBER'}

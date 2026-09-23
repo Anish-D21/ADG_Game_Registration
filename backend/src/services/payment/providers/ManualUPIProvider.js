@@ -17,13 +17,32 @@ export class ManualUPIProvider extends PaymentProvider {
         `UPI_VPA is not a valid UPI ID (got "${vpa || 'empty'}"). Payments are disabled until it is corrected.`
       );
     }
-    const payee = encodeURIComponent(process.env.UPI_PAYEE_NAME || 'ADG DECEPTION');
-    // tn (note) and tr (reference) both carry the registration ID so the payment is
-    // identifiable in the bank statement when the organiser reconciles.
-    // No amount is pre-filled: members may be paying their own share rather than the
-    // squad total, so the payer types the figure. The registration ID still rides along
-    // as the reference so the credit is identifiable in the bank statement.
-    const qrUri = `upi://pay?pa=${vpa}&pn=${payee}&cu=${currency}&tr=${registrationId}&tn=${encodeURIComponent('DECEPTION ' + registrationId)}`;
+    const payee = process.env.UPI_PAYEE_NAME || 'ADG DECEPTION';
+
+    // `tr` is deliberately omitted. It marks the payment as a MERCHANT transaction,
+    // which makes apps expect a merchant code (mc) and a registered merchant VPA.
+    // This pays a personal VPA, so a P2P intent is correct - sending tr against it
+    // gets rejected with "transaction failed, try again with a new QR". A reused tr
+    // is also treated as a replay. The registration ID travels in the note instead,
+    // which still shows up in the bank statement narration.
+
+    const note = `DECEPTION ${registrationId}`;
+
+    // The amount MUST be present or most UPI apps refuse a pay intent outright.
+    // The caller decides the figure, because a member may be paying only their share.
+    const payable = Number(amount) > 0 ? Number(amount).toFixed(2) : null;
+
+    const params = [
+      // The VPA goes in raw. Percent-encoding the @ breaks it in most UPI apps,
+      // and a VPA contains no characters that need escaping anyway.
+      `pa=${vpa}`,
+      `pn=${encodeURIComponent(payee)}`,
+      payable ? `am=${payable}` : null,
+      `cu=${encodeURIComponent(currency)}`,
+      `tn=${encodeURIComponent(note)}`
+    ].filter(Boolean);
+
+    const qrUri = `upi://pay?${params.join('&')}`;
 
     return {
       success: true,
@@ -35,7 +54,8 @@ export class ManualUPIProvider extends PaymentProvider {
       qrData: qrUri,
       upiUrl: qrUri,
       vpa,
-      payeeName: process.env.UPI_PAYEE_NAME || 'ADG DECEPTION',
+      payeeName: payee,
+      note,
       instructions: `Scan the QR with any UPI app, pay your share (or the full squad amount), then submit the 12-digit UTR reference along with how much you paid. Each member who pays should submit their own reference.`
     };
   }
