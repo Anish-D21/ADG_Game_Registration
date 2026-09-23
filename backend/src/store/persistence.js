@@ -13,6 +13,7 @@
  */
 
 import mongoose from 'mongoose';
+import { hashPassword, verifyPassword } from '../utils/password.js';
 
 // Every array on the store that needs to outlive the process.
 export const COLLECTIONS = [
@@ -62,6 +63,7 @@ export async function hydrate(store) {
   }
 
   migrateLegacyPayments(store);
+  applyAdminPasswordFromEnv(store);
 
   const meta = await db().collection(META).findOne({ _id: 'counters' });
   if (meta && Number.isFinite(meta.registrationCounter)) {
@@ -71,6 +73,34 @@ export async function hydrate(store) {
   store.syncRegistrationCounter();
 
   return { enabled: true, loaded };
+}
+
+/**
+ * Make ADMIN_PASSWORD authoritative on every boot.
+ *
+ * The admin row is persisted, so hydrate() replaces the account seeded at startup
+ * with the stored one - including its old password hash. Without this, setting
+ * ADMIN_PASSWORD on the host appears to work but changes nothing, and the account
+ * silently keeps whatever password it was first created with. For the one account
+ * that approves payments and can export every participant's details, failing closed
+ * like that is worse than useless.
+ */
+function applyAdminPasswordFromEnv(store) {
+  const desired = process.env.ADMIN_PASSWORD;
+  if (!desired) return;
+
+  let changed = 0;
+  for (const admin of store.admins || []) {
+    if (admin.email?.toLowerCase() !== 'admin@adg.org') continue;
+    if (verifyPassword(desired, admin.passwordHash)) continue;
+    admin.passwordHash = hashPassword(desired);
+    admin.updatedAt = new Date();
+    changed++;
+  }
+  if (changed > 0) {
+    console.log('[Auth] Admin password updated from ADMIN_PASSWORD.');
+    markDirty();
+  }
 }
 
 /**

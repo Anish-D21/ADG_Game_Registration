@@ -12,7 +12,8 @@ import { PaymentDeskPage } from './pages/PaymentDeskPage.tsx';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
-  const [currentRegId, setCurrentRegId] = useState<string>('GAME26-00101');
+  // Empty until a squad is actually registered in this session.
+  const [currentRegId, setCurrentRegId] = useState<string>('');
 
   const handleRegistrationSuccess = (regId: string) => {
     setCurrentRegId(regId);

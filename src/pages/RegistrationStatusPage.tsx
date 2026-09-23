@@ -26,7 +26,7 @@ interface RegistrationStatusPageProps {
 }
 
 export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ initialRegId, setActiveTab }) => {
-  const [searchId, setSearchId] = useState(initialRegId || 'GAME26-00101');
+  const [searchId, setSearchId] = useState(initialRegId || '');
   const [registration, setRegistration] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -46,11 +46,13 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   const [utrPayer, setUtrPayer] = useState('');
   const [paymentActionLoading, setPaymentActionLoading] = useState(false);
 
+  // Only auto-load when we were handed an ID by the registration flow, i.e. the
+  // visitor just created this squad. Defaulting to a hardcoded ID meant every
+  // visitor was shown whichever squad happened to hold it - including its entry
+  // pass - before typing anything.
   useEffect(() => {
     if (initialRegId) {
       loadRegistration(initialRegId);
-    } else {
-      loadRegistration('GAME26-00101');
     }
   }, [initialRegId]);
 
