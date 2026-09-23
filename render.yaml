@@ -1,0 +1,75 @@
+# Render Blueprint for the DECEPTION registration app.
+#
+# One web service serves both the API and the built React site, so there is no
+# second host, no CORS and no proxy to configure.
+#
+# Secrets are marked `sync: false`: Render prompts for them once in the dashboard
+# and never stores them in this repo.
+
+services:
+  - type: web
+    name: deception-registration
+    runtime: node
+    plan: free
+    region: singapore          # closest free region to Mumbai
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+
+    envVars:
+      # ---- runtime ----
+      - key: NODE_ENV
+        value: production
+
+      # ---- database (required) ----
+      # Without this the app still boots but loses every registration on restart.
+      - key: MONGO_URI
+        sync: false
+
+      # ---- organiser login (required) ----
+      # This account approves payments and can export every participant's
+      # personal details. Do not reuse the value from .env.example.
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      - key: JWT_SECRET
+        generateValue: true     # Render generates a strong random value
+
+      # ---- payments ----
+      # MOCK_PAYMENT must stay "false" in production. Set to "true" and anyone
+      # can issue themselves a confirmed ticket without paying.
+      - key: MOCK_PAYMENT
+        value: "false"
+      - key: UPI_VPA
+        sync: false
+      - key: UPI_PAYEE_NAME
+        value: ADG DECEPTION
+
+      # ---- fees ----
+      # Charged per participant: a 5-player squad owes 5x this, a 6-player squad 6x.
+      # Changing this here updates the expected total, the approval threshold, and
+      # the fee shown on the home page, the rules and the FAQ.
+      - key: PER_HEAD_AMOUNT
+        value: "100"
+      - key: CURRENCY
+        value: INR
+
+      # ---- demo data ----
+      # Leave "false". The samples pollute the dashboard, the exports and revenue.
+      - key: SEED_DEMO_DATA
+        value: "false"
+
+      # ---- email (optional) ----
+      # Without these the app records every message but sends nothing, which is
+      # safe: students can still look their ticket up on the Check Status page.
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
