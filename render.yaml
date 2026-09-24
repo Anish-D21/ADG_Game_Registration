@@ -51,7 +51,7 @@ services:
       # Changing this here updates the expected total, the approval threshold, and
       # the fee shown on the home page, the rules and the FAQ.
       - key: PER_HEAD_AMOUNT
-        value: "100"
+        value: "50"
       - key: CURRENCY
         value: INR
 
