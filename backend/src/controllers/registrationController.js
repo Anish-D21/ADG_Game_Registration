@@ -113,6 +113,16 @@ export async function getRegistration(req, res) {
     }
 
     const safe = { ...details };
+
+    // The pass travels in this response too, so gating /tickets alone would leave the
+    // door open. Withhold it unless the caller proves ownership the same way.
+    const claimedEmail = String(req.query.contactEmail || '').trim().toLowerCase();
+    const ownsSquad = claimedEmail &&
+      claimedEmail === String(details.registration?.contactEmail || '').trim().toLowerCase();
+    if (!ownsSquad) {
+      safe.ticket = null;
+      safe.ticketLocked = true;
+    }
     if (safe.registration) {
       safe.registration = {
         ...safe.registration,
@@ -143,6 +153,22 @@ export async function getRegistration(req, res) {
 export async function getTicketInfo(req, res) {
   try {
     const { registrationId } = req.params;
+
+    // The QR pass is what gets someone through the door, and registration IDs run in
+    // sequence, so this cannot be readable by counting upwards. Knowing the leader's
+    // full email is the proof of ownership - the public lookup only returns it masked.
+    const claimed = String(req.query.contactEmail || req.body?.contactEmail || '').trim().toLowerCase();
+    const reg = store.registrations.find(r => r.registrationId === registrationId);
+    if (!reg) {
+      return res.status(404).json({ success: false, message: `Registration "${registrationId}" was not found.` });
+    }
+    if (!claimed || claimed !== String(reg.contactEmail || '').trim().toLowerCase()) {
+      return res.status(403).json({
+        success: false,
+        message: "Enter the team leader's email address to view this squad's entry pass."
+      });
+    }
+
     const ticket = await ticketService.getTicket(registrationId);
 
     if (!ticket) {

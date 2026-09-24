@@ -83,11 +83,6 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   &gt; Check Status / Download Pass
                 </button>
               </li>
-              <li>
-                <button onClick={() => setActiveTab('admin')} className="hover:text-[#F4C430] transition-colors">
-                  &gt; Organizer Admin Portal
-                </button>
-              </li>
             </ul>
           </div>
 

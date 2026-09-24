@@ -11,7 +11,14 @@ import { AdminPage } from './pages/AdminPage.tsx';
 import { PaymentDeskPage } from './pages/PaymentDeskPage.tsx';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('home');
+  // Organiser screens are no longer in the nav, so allow ?admin and ?payments
+  // as the way in. Both still require a login; this only chooses the view.
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.has('admin')) return 'admin';
+    if (q.has('payments')) return 'payments';
+    return 'home';
+  });
   // Empty until a squad is actually registered in this session.
   const [currentRegId, setCurrentRegId] = useState<string>('');
 

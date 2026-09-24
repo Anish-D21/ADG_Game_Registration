@@ -28,8 +28,9 @@ export async function createRegistration(data: any) {
   return json;
 }
 
-export async function fetchRegistration(id: string) {
-  const res = await fetch(`${API_BASE}/registrations/${encodeURIComponent(id)}`);
+export async function fetchRegistration(id: string, contactEmail?: string) {
+  const qs = contactEmail ? `?contactEmail=${encodeURIComponent(contactEmail)}` : '';
+  const res = await fetch(`${API_BASE}/registrations/${encodeURIComponent(id)}${qs}`);
   const json = await res.json();
   if (!res.ok) {
     throw new Error(json.message || 'Registration not found');

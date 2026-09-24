@@ -101,6 +101,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   const [utrNumber, setUtrNumber] = useState('');
   const [utrProofUrl, setUtrProofUrl] = useState('');
   const [proofUploading, setProofUploading] = useState(false);
+  // Which player's ID card is currently being sent. Uploads round-trip to Drive and
+  // a real ID photo is a few MB, so without this the card sits silent for seconds
+  // and students assume it has hung.
+  const [uploadingIds, setUploadingIds] = useState<Record<number, boolean>>({});
   const [proofName, setProofName] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
@@ -252,7 +256,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   };
 
   // Step 3 Validation (Documents)
+  const uploadsInFlight = Object.values(uploadingIds).some(Boolean);
+
   const validateStep3 = () => {
+    if (uploadsInFlight) {
+      setErrorMsg('Please wait — ID cards are still uploading.');
+      return false;
+    }
     for (let i = 0; i < players.length; i++) {
       if (!players[i].idCardUrl) {
         // Warning or prompt for ID Card upload
@@ -274,6 +284,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       return;
     }
 
+    setUploadingIds(prev => ({ ...prev, [idx]: true }));
     const reader = new FileReader();
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
@@ -293,6 +304,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       } catch (err: any) {
         // Fallback to dataUrl directly
         updatePlayerField(idx, 'idCardUrl', dataUrl);
+      } finally {
+        setUploadingIds(prev => ({ ...prev, [idx]: false }));
       }
     };
     reader.readAsDataURL(file);
@@ -992,6 +1005,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                     <span className="text-[#2E7D32] text-[10px] font-pixel flex items-center gap-1 shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5" /> UPLOADED
                     </span>
+                  ) : uploadingIds[idx] ? (
+                    <span className="text-[#F9A825] text-[10px] font-pixel shrink-0">UPLOADING…</span>
                   ) : (
                     <span className="text-[#E5005A] text-[10px] font-pixel shrink-0">REQUIRED</span>
                   )}
@@ -1015,6 +1030,16 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                         className="hidden"
                       />
                     </label>
+                  </div>
+                ) : uploadingIds[idx] ? (
+                  /* A real ID photo is a few MB and goes to Drive, so this can take
+                     several seconds. Say so, or it reads as a frozen page. */
+                  <div className="border-2 border-[#111827] bg-[#F7E8B5] p-4 text-center flex flex-col items-center justify-center min-h-[104px]">
+                    <div className="w-5 h-5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin mb-2" />
+                    <span className="font-arcade text-xs text-[#111827] font-bold">Uploading…</span>
+                    <span className="text-[10px] text-gray-600 font-body mt-0.5">
+                      Sending to secure storage — this can take a few seconds
+                    </span>
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-[#111827] bg-[#FFFDF0] p-4 rounded-none text-center flex flex-col items-center justify-center cursor-pointer hover:bg-white transition-colors">

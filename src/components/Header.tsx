@@ -10,14 +10,15 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+  // Students only. The organiser screens are reachable at ?admin / ?payments -
+  // putting them in a participant's navigation only invites people to try the
+  // door, and makes the site look like it was built for the organisers.
+  const navItems: { id: string; label: string; icon?: React.ComponentType<any> }[] = [
     { id: 'home', label: 'Home' },
     { id: 'game', label: 'Game Info' },
     { id: 'rules', label: 'Rules' },
     { id: 'faq', label: 'FAQ' },
-    { id: 'status', label: 'Check Status' },
-    { id: 'payments', label: 'Payment Desk', icon: Lock },
-    { id: 'admin', label: 'Admin Portal', icon: Lock }
+    { id: 'status', label: 'Check Status' }
   ];
 
   return (

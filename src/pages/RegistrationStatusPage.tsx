@@ -40,6 +40,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   const [utrInput, setUtrInput] = useState('');
   const [utrProof, setUtrProof] = useState('');
   const [utrEmail, setUtrEmail] = useState('');
+  // Proving ownership unlocks the entry pass. Registration IDs are sequential, so the
+  // pass cannot be readable by anyone who counts upwards to a valid one.
+  const [unlockEmail, setUnlockEmail] = useState('');
   const [payOrder, setPayOrder] = useState<any>(null);
   const [qrImage, setQrImage] = useState('');
   const [copiedVpa, setCopiedVpa] = useState(false);
@@ -61,12 +64,12 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     }
   }, [initialRegId]);
 
-  const loadRegistration = async (id: string) => {
+  const loadRegistration = async (id: string, email?: string) => {
     if (!id.trim()) return;
     setLoading(true);
     setErrorMsg(null);
     try {
-      const data = await fetchRegistration(id.trim());
+      const data = await fetchRegistration(id.trim(), (email ?? unlockEmail).trim() || undefined);
       // The API nests the squad under `registration` and names the roster `members`,
       // but this page reads a flat object with `players`. Without this reshape every
       // field on the page - team name, status, registrationId, the pass - is
@@ -77,6 +80,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
         players: data.members || [],
         payment: data.payment || null,
         ticket: data.ticket || null,
+        // The server withholds the pass unless ownership was proven; carry the flag
+        // through or the page cannot tell "no pass yet" from "pass locked".
+        ticketLocked: Boolean(data.ticketLocked),
         invoice: data.invoice || null
       });
     } catch (err: any) {
@@ -301,9 +307,9 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     doc.text(`Venue: SFIT Room No. 318 (Report at 09:30 AM)`, 20, 85);
 
     // QR Code Placement (if available)
-    if (registration.ticket?.qrDataUrl) {
+    if (registration.ticket?.qrCodeUrl) {
       try {
-        doc.addImage(registration.ticket.qrDataUrl, 'PNG', 145, 48, 44, 44);
+        doc.addImage(registration.ticket.qrCodeUrl, 'PNG', 145, 48, 44, 44);
       } catch (e) {
         // In case image failed to add
       }
@@ -479,14 +485,50 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                   </p>
                 </div>
 
+                {/* Unlock control for the pass */}
+                {registration.ticketLocked && (
+                  <div className="w-full sm:w-auto sm:min-w-[210px] border-2 border-[#111827] bg-[#F7E8B5] p-2.5 space-y-1.5 shrink-0">
+                    <p className="text-[10px] font-bold text-[#111827]">
+                      Team leader's email to unlock your pass
+                    </p>
+                    <input
+                      type="email"
+                      value={unlockEmail}
+                      onChange={(e) => setUnlockEmail(e.target.value)}
+                      placeholder="leader@student.sfit.ac.in"
+                      className="w-full px-2 py-1.5 bg-white border-2 border-[#111827] text-[11px]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => loadRegistration(registration.registrationId, unlockEmail)}
+                      disabled={!unlockEmail.trim()}
+                      className="w-full bg-[#111827] text-white font-arcade text-[10px] py-1.5 disabled:opacity-40"
+                    >
+                      UNLOCK PASS
+                    </button>
+                  </div>
+                )}
+
                 {/* QR Ticket */}
                 <div className="bg-white border-3 sm:border-4 border-[#F4C430] p-2.5 sm:p-3 shadow-[3px_3px_0_0_#000] flex flex-col items-center shrink-0">
-                  {registration.ticket?.qrDataUrl ? (
+                  {registration.ticket?.qrCodeUrl ? (
                     <img
-                      src={registration.ticket.qrDataUrl}
+                      src={registration.ticket.qrCodeUrl}
                       alt="DECEPTION Entry QR Pass"
                       className="w-32 h-32 sm:w-36 sm:h-36"
                     />
+                  ) : registration.ticketLocked ? (
+                    /* The pass is the entry credential, so it is withheld until the
+                       viewer proves the squad is theirs. */
+                    <div className="w-32 h-32 sm:w-36 sm:h-36 bg-gray-100 flex flex-col items-center justify-center p-2 text-center gap-1">
+                      <QrCode className="w-8 h-8 text-gray-400" />
+                      <span className="text-[9px] font-bold text-gray-600 leading-tight">
+                        Pass locked
+                      </span>
+                      <span className="text-[8px] text-gray-500 leading-tight">
+                        Enter the leader's email to view
+                      </span>
+                    </div>
                   ) : (
                     <div className="w-32 h-32 sm:w-36 sm:h-36 bg-gray-100 flex items-center justify-center">
                       <QrCode className="w-20 h-20 sm:w-24 sm:h-24 text-gray-800" />
