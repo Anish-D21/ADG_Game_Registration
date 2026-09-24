@@ -119,25 +119,35 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
   // Update specific player field
   const updatePlayerField = (idx: number, field: keyof PlayerFormData, val: any) => {
-    const updated = [...players];
-    updated[idx] = { ...updated[idx], [field]: val };
-    setPlayers(updated);
+    // Functional update: the ID card uploads all resolve asynchronously, and copying
+    // `players` from the closure meant each callback wrote over the others' results.
+    // Only the last upload survived, so the form blocked at step 3 insisting a card
+    // was missing for a player who had just uploaded one.
+    setPlayers(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], [field]: val };
+      return updated;
+    });
     setErrorMsg(null);
   };
 
   // Switch student between SFIT and Non-SFIT
   const setPlayerCollegeType = (idx: number, isSfit: boolean) => {
-    const updated = [...players];
-    const current = updated[idx];
-    updated[idx] = {
-      ...current,
-      isSfit,
-      collegeType: isSfit ? 'SFIT' : 'NON_SFIT',
-      college: isSfit 
-        ? 'St. Francis Institute of Technology (SFIT)' 
-        : (current.college === 'St. Francis Institute of Technology (SFIT)' || current.college === 'SFIT' ? '' : current.college)
-    };
-    setPlayers(updated);
+    // Functional update for the same reason as updatePlayerField: a copy taken from
+    // the closure loses any change that landed between render and commit.
+    setPlayers(prev => {
+      const updated = [...prev];
+      const current = updated[idx];
+      updated[idx] = {
+        ...current,
+        isSfit,
+        collegeType: isSfit ? 'SFIT' : 'NON_SFIT',
+        college: isSfit
+          ? 'St. Francis Institute of Technology (SFIT)'
+          : (current.college === 'St. Francis Institute of Technology (SFIT)' || current.college === 'SFIT' ? '' : current.college)
+      };
+      return updated;
+    });
     setErrorMsg(null);
   };
 
@@ -902,10 +912,11 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                           onChange={(e) => updatePlayerField(idx, 'branch', e.target.value)}
                           className="w-full px-3 py-2 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] text-xs focus:outline-none"
                         >
+                          {/* The config list already ends with OTHER; appending it again
+                              put a duplicate entry in the dropdown. */}
                           {EVENT_CONFIG.participantConfig.branches.map((b) => (
-                            <option key={b} value={b}>{b}</option>
+                            <option key={b} value={b}>{b === 'OTHER' ? 'Other Branch' : b}</option>
                           ))}
-                          <option value="OTHER">Other Branch</option>
                         </select>
                       </div>
 
