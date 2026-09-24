@@ -9,6 +9,7 @@ import { RegistrationPage } from './pages/RegistrationPage.tsx';
 import { RegistrationStatusPage } from './pages/RegistrationStatusPage.tsx';
 import { AdminPage } from './pages/AdminPage.tsx';
 import { PaymentDeskPage } from './pages/PaymentDeskPage.tsx';
+import { useKeepAwake } from './services/useKeepAwake.ts';
 
 export default function App() {
   // Organiser screens are no longer in the nav, so allow ?admin and ?payments
@@ -23,6 +24,9 @@ export default function App() {
   });
   // Empty until a squad is actually registered in this session.
   const [currentRegId, setCurrentRegId] = useState<string>('');
+
+  // Keep the host awake for as long as someone has the site open.
+  useKeepAwake();
 
   const handleRegistrationSuccess = (regId: string) => {
     setCurrentRegId(regId);
