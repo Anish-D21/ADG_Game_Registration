@@ -12,7 +12,7 @@ services:
     runtime: node
     plan: free
     region: singapore          # closest free region to Mumbai
-    branch: main
+    branch: deploy/production
     buildCommand: npm run build
     startCommand: npm start
     healthCheckPath: /api/health
