@@ -334,8 +334,22 @@ export function PaymentDeskPage() {
                           title={p.fullyPaid
                             ? 'Confirm this squad and issue their entry pass'
                             : `Still short ₹${Number(p.amountRemaining || 0).toLocaleString('en-IN')} — the whole squad must be paid for before it goes in`}
-                          className="flex items-center gap-2 bg-[#2E7D32] text-white font-bold text-sm px-4 py-3 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed">
-                          <Check className="w-4 h-4" /> {busy ? 'Saving…' : p.fullyPaid ? 'Money received' : 'Part paid'}
+                          className={`flex items-center gap-2 font-bold text-sm px-4 py-3 disabled:cursor-not-allowed ${
+                            p.fullyPaid
+                              ? 'bg-[#2E7D32] text-white hover:brightness-110'
+                              : 'bg-[#111827]/15 text-[#111827]/50 border-2 border-[#111827]/20'
+                          }`}>
+                          <Check className="w-4 h-4" />
+                          {busy
+                            ? 'Saving…'
+                            : p.fullyPaid
+                              ? 'Money received'
+                              // Distinguish "nothing has arrived" from "some has": at a
+                              // glance during the event, "Part paid" on a squad at zero
+                              // reads as money having come in.
+                              : Number(p.amountPaid) > 0
+                                ? `Part paid · ₹${Number(p.amountPaid).toLocaleString('en-IN')}`
+                                : 'Not paid yet'}
                         </button>
                         <button onClick={() => { setRejecting(p); setRejectReason(''); }} disabled={busy}
                           title="Payment not found"
