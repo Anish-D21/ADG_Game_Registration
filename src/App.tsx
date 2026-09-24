@@ -14,9 +14,11 @@ export default function App() {
   // Organiser screens are no longer in the nav, so allow ?admin and ?payments
   // as the way in. Both still require a login; this only chooses the view.
   const [activeTab, setActiveTab] = useState<string>(() => {
+    // Accept both /admin and ?admin - a path is what people actually type.
     const q = new URLSearchParams(window.location.search);
-    if (q.has('admin')) return 'admin';
-    if (q.has('payments')) return 'payments';
+    const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
+    if (q.has('admin') || path.endsWith('/admin')) return 'admin';
+    if (q.has('payments') || path.endsWith('/payments')) return 'payments';
     return 'home';
   });
   // Empty until a squad is actually registered in this session.
