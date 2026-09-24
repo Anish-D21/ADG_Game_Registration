@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# This project uses npm. A bun lockfile makes hosts autodetect bun and
+# generate a build command that never runs the app.
+bun.lock
+bun.lockb
