@@ -10,22 +10,41 @@ export async function connectDB() {
     return false;
   }
 
-  try {
-    if (isConnected) {
-      return true;
-    }
-
-    await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-
-    isConnected = true;
-    console.log('[Database] MongoDB Atlas successfully connected.');
+  if (isConnected) {
     return true;
-  } catch (error) {
-    console.warn('[Database] MongoDB Atlas connection failed. Falling back to active local in-memory store:', error.message);
-    return false;
   }
+
+  // A transient blip - a network change, a DNS hiccup - should not decide the fate of
+  // the event's data, so retry before giving up.
+  const ATTEMPTS = 5;
+  let lastError;
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    try {
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 8000 });
+      isConnected = true;
+      console.log(`[Database] MongoDB connected${attempt > 1 ? ` (attempt ${attempt})` : ''}.`);
+      return true;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[Database] Connection attempt ${attempt}/${ATTEMPTS} failed: ${error.message.split('\n')[0]}`);
+      if (attempt < ATTEMPTS) {
+        await new Promise(r => setTimeout(r, attempt * 2000));
+      }
+    }
+  }
+
+  // Refuse to run. Starting anyway would serve an empty database: existing squads
+  // would read as "not found", and new registrations would be accepted into memory
+  // and lost on the next restart. A process that will not start is obvious and
+  // recoverable; one that quietly forgets everything is neither.
+  console.error('');
+  console.error('[Database] FATAL: MONGO_URI is configured but unreachable after ' + ATTEMPTS + ' attempts.');
+  console.error('[Database] Refusing to start - running without it would drop every registration.');
+  console.error('[Database] Check: Atlas IP access list includes 0.0.0.0/0, the cluster is not paused,');
+  console.error('[Database] and the username/password in MONGO_URI are correct.');
+  console.error('[Database] Last error: ' + (lastError?.message || 'unknown'));
+  console.error('');
+  process.exit(1);
 }
 
 export default connectDB;

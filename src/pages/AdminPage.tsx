@@ -409,7 +409,7 @@ export const AdminPage: React.FC = () => {
             >
               <option value="">All Statuses</option>
               <option value="CONFIRMED">CONFIRMED</option>
-              <option value="PENDING_PAYMENT">PENDING_PAYMENT</option>
+              <option value="PAYMENT_PENDING">PAYMENT_PENDING</option>
               <option value="CANCELLED">CANCELLED</option>
             </select>
 

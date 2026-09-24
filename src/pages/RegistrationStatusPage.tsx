@@ -346,7 +346,13 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
 
   const isConfirmed = registration?.status === 'CONFIRMED' || registration?.payment?.status === 'PAID';
   const isPendingVerification = registration?.payment?.status === 'PENDING_VERIFICATION';
-  const isPaymentPending = registration?.payment?.status === 'PENDING' || registration?.status === 'PENDING_PAYMENT';
+  // Drive this off what the squad still owes rather than off status strings. The old
+  // check compared against 'PENDING_PAYMENT' - the enum is 'PAYMENT_PENDING', the words
+  // transposed - so a freshly registered squad never saw the pay button at all.
+  const isPaymentPending =
+    Number(registration?.payment?.amountRemaining ?? 0) > 0 &&
+    registration?.status !== 'CONFIRMED' &&
+    registration?.status !== 'REJECTED';
 
   return (
     <div className="max-w-4xl mx-auto px-3.5 sm:px-4 py-5 sm:py-8 space-y-6 sm:space-y-8">
