@@ -1367,6 +1367,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                     </>
                   )}
 
+                {/* Some wallets refuse intents they did not originate - a student hitting
+                    one should know to try another route rather than give up. */}
+                <p className="text-[10px] text-[#111827]/60 leading-snug">
+                  If one app refuses the payment, pick a different one, scan the QR from
+                  another phone, or copy the UPI ID below and pay manually. All three
+                  reach the same account.
+                </p>
                   {/* Always show the raw UPI ID: it works even if every deep link and
                       the QR fail, and it lets the payer confirm where the money goes. */}
                   <div className="pt-1">

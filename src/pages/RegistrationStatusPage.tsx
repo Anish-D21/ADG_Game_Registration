@@ -43,6 +43,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
   const [payOrder, setPayOrder] = useState<any>(null);
   const [qrImage, setQrImage] = useState('');
   const [copiedVpa, setCopiedVpa] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [utrProofName, setUtrProofName] = useState('');
   const [utrProofUploading, setUtrProofUploading] = useState(false);
   const [payCfg, setPayCfg] = useState<any>({ mockEnabled: false, upiVpa: '' });
@@ -114,6 +115,14 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
 
   // Members who did not fill the registration form pay from this page, so it needs
   // the same QR and app links as the registration flow - not just a UPI ID to retype.
+  // Default the amount to the whole outstanding balance. Someone paying only their
+  // own share can change it; everyone else never touches the field.
+  useEffect(() => {
+    if (showPaymentModal && !utrAmount && registration?.payment?.amountRemaining) {
+      setUtrAmount(String(registration.payment.amountRemaining));
+    }
+  }, [showPaymentModal, registration]);
+
   useEffect(() => {
     if (!showPaymentModal || !registration?.registrationId || payOrder) return;
     let alive = true;
@@ -715,66 +724,58 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                 <h4 className="font-arcade text-xs font-bold text-[#111827]">
                   Pay by UPI, then enter your reference
                 </h4>
-                <p className="text-[11px] text-[#111827]/70">
-                  Enter the amount you are paying below first — the buttons and QR are
-                  built from it. Leave it blank to pay the full remaining
-                  {registration?.payment?.amountRemaining ? ` ₹${registration.payment.amountRemaining}` : ''}.
-                </p>
-                <p className="text-[11px] font-bold">
-                  Paying now: ₹{payNow || 0}
-                </p>
-                {qrImage && (
-                  <div className="flex justify-center py-2">
-                    <img src={qrImage} alt="UPI QR" className="w-36 h-36 border-2 border-[#111827] bg-white p-1" />
-                  </div>
-                )}
-
+                {/* One button. Android's own chooser is the "pick your app" step -
+                    duplicating it with branded buttons just adds decisions. */}
                 {upiUri && (
                   <a href={upiUri}
-                    className="block text-center font-arcade text-xs py-3.5 border-2 border-[#111827] bg-[#2E7D32] text-white shadow-[3px_3px_0_0_#111827] hover:brightness-110">
-                    PAY ₹{payNow || 0} WITH ANY UPI APP
+                    className="block text-center font-arcade text-sm py-4 border-2 border-[#111827] bg-[#2E7D32] text-white shadow-[3px_3px_0_0_#111827]">
+                    PAY ₹{payNow || 0}
                   </a>
                 )}
 
-                {upiApps.length > 0 && (
-                  <>
-                    <p className="text-[10px] text-center text-[#111827]/50 uppercase tracking-wide">
-                      or open a specific app
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {upiApps.map(a => (
-                        <a key={a.label} href={a.href}
-                          className="text-center font-bold text-[10px] py-2 border-2 border-[#111827] bg-[#F7E8B5] hover:bg-[#E5005A] hover:text-white">
-                          {a.label}
-                        </a>
-                      ))}
-                    </div>
-                  </>
+                <button type="button" onClick={() => setShowQr(v => !v)}
+                  className="w-full text-[11px] text-[#111827]/60 underline py-1">
+                  {showQr ? 'hide QR' : 'or scan the QR / pay the UPI ID manually'}
+                </button>
+
+                {showQr && (
+                  <div className="space-y-2">
+                    {qrImage && (
+                      <div className="flex justify-center">
+                        <img src={qrImage} alt="UPI QR" className="w-40 h-40 border-2 border-[#111827] bg-white p-1" />
+                      </div>
+                    )}
+                    <button type="button" onClick={copyVpa}
+                      className="w-full font-mono text-[11px] bg-[#F7E8B5] px-2 py-2 border-2 border-[#111827] break-all">
+                      {payOrder?.vpa || payCfg.upiVpa || 'loading…'}
+                      {copiedVpa && <span className="ml-2 text-[#2E7D32] font-bold">copied</span>}
+                    </button>
+                  </div>
                 )}
 
-                <button type="button" onClick={copyVpa}
-                  className="w-full font-mono text-[11px] bg-[#F7E8B5] px-2 py-2 border-2 border-[#111827] break-all text-left hover:bg-[#F4C430]">
-                  {payOrder?.vpa || payCfg.upiVpa || 'loading…'}
-                  {copiedVpa && <span className="ml-2 text-[#2E7D32] font-bold">copied</span>}
-                </button>
-                <p className="text-gray-600 text-[11px]">
-                  Members may each pay their own share. Everyone who pays should submit
-                  their own UTR and amount.
-                </p>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  pattern="[0-9]*"
-                  value={utrInput}
-                  onChange={(e) => setUtrInput(e.target.value.replace(/[^0-9A-Za-z]/g, ''))}
-                  placeholder="426189012345"
-                  className="w-full px-3 py-2 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-base tracking-wider"
-                />
-                <p className="text-[10px] text-gray-600">
-                  GPay: tap the payment → <strong>UPI transaction ID</strong>. PhonePe/Paytm:
-                  on the receipt as <strong>UTR</strong>. Long-press to copy.
-                </p>
+                <div className="border-t-2 border-[#111827]/15 pt-3">
+                  <p className="text-[11px] font-bold mb-2">After paying, tell us:</p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#111827] mb-1">
+                    12-digit UPI reference (UTR) *
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    pattern="[0-9]*"
+                    value={utrInput}
+                    onChange={(e) => { setUtrInput(e.target.value.replace(/[^0-9A-Za-z]/g, '')); setErrorMsg(null); }}
+                    placeholder="426189012345"
+                    className="w-full px-3 py-2.5 bg-[#F7E8B5] border-2 border-[#111827] font-mono text-base tracking-wider"
+                  />
+                  <p className="text-[10px] text-gray-600 mt-1">
+                    GPay: tap the payment → <strong>UPI transaction ID</strong>. Other apps: on the receipt as <strong>UTR</strong>.
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-[11px] font-bold text-[#111827] mb-1">
                     Team leader's email * (confirms this is your squad)
