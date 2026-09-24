@@ -123,6 +123,22 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
           <p className="flex items-center gap-1 mt-2 sm:mt-0">
             Engineered for <span className="text-[#F7E8B5] font-bold">St. Francis Institute of Technology</span> • Room 318
           </p>
+          {/* Organisers need a way in that does not mean remembering a URL, but it
+              should not sit in a participant's main navigation either. */}
+          <p className="mt-2 sm:mt-0 flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('payments')}
+              className="text-gray-600 hover:text-[#F4C430] transition-colors"
+            >
+              Payment Desk
+            </button>
+            <button
+              onClick={() => setActiveTab('admin')}
+              className="text-gray-600 hover:text-[#F4C430] transition-colors"
+            >
+              Organiser Login
+            </button>
+          </p>
         </div>
       </div>
     </footer>
