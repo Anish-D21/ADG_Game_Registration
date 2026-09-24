@@ -97,9 +97,13 @@ export const AdminPage: React.FC = () => {
   const loadAllAdminData = async () => {
     setLoading(true);
     try {
+      // The tab bar shows counts, so the stats must load whatever tab is open.
+      // Fetching them only on 'overview' meant the bar read "Payment Desk (0 Pending)"
+      // while squads were actually waiting - the one number an organiser acts on.
+      fetchAdminDashboard().then(setDashboardData).catch(() => {});
+
       if (activeTab === 'overview') {
-        const stats = await fetchAdminDashboard();
-        setDashboardData(stats);
+        // stats already requested above
       } else if (activeTab === 'registrations') {
         const regs = await fetchAdminRegistrations({
           search: regSearch,
@@ -292,8 +296,8 @@ export const AdminPage: React.FC = () => {
         {[
           { id: 'overview', label: 'Dashboard Overview' },
           { id: 'registrations', label: `Registrations (${dashboardData?.totalRegistrations ?? '...'})` },
-          { id: 'verification', label: `Payment Desk (${pendingPayments.length} Pending)` },
-          { id: 'students', label: `Participants (${students.length})` },
+          { id: 'verification', label: `Payment Desk (${dashboardData?.pendingVerification ?? pendingPayments.length} Pending)` },
+          { id: 'students', label: `Participants (${dashboardData?.totalParticipants ?? students.length})` },
           { id: 'audit', label: 'Audit Trail' },
           { id: 'emails', label: 'Email Dispatches' }
         ].map((tab) => (
