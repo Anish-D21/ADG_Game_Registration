@@ -42,7 +42,7 @@ export function PaymentDeskPage() {
     setLoadError(null);
     try {
       const data = await fetchAdminPayments();
-      setPayments(data.payments || []);
+      setPayments(Array.isArray(data) ? data : []);
       setLastSynced(new Date());
     } catch (err: any) {
       // A stale token is the common case here; send them back to the login card.

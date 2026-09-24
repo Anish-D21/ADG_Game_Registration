@@ -341,7 +341,7 @@ export const AdminPage: React.FC = () => {
             <div className="bg-[#FFFDF0] border-3 border-[#111827] p-5 shadow-[4px_4px_0_0_#111827]">
               <span className="text-[10px] font-pixel text-gray-500 block">VERIFIED STUDENTS</span>
               <div className="font-pixel text-3xl text-[#4CAF50] mt-1">
-                {dashboardData?.totalStudents ?? 0}
+                {dashboardData?.totalParticipants ?? 0}
               </div>
               <span className="text-xs font-arcade text-gray-600 mt-1 block">
                 @student.sfit.ac.in
@@ -697,10 +697,10 @@ export const AdminPage: React.FC = () => {
                 </span>
                 <div className="flex-1 space-y-0.5">
                   <div className="font-bold text-[#111827]">
-                    Target: {log.targetType} ({log.targetId})
+                    Target: {log.entity} ({log.entityId})
                   </div>
                   <div className="text-gray-600 font-mono text-[11px]">
-                    {JSON.stringify(log.details)}
+                    {log.actor} · {JSON.stringify(log.metadata)}
                   </div>
                 </div>
                 <div className="text-gray-500 font-mono text-[10px] shrink-0">

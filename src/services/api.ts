@@ -105,7 +105,8 @@ export async function fetchAdminDashboard() {
     headers: { ...getAdminAuthHeader() }
   });
   if (!res.ok) throw new Error('Unauthorized or failed to load dashboard stats');
-  return res.json();
+  const json = await res.json();
+  return json.stats ?? {};
 }
 
 export async function fetchAdminRegistrations(filters: { search?: string; status?: string; teamSize?: string } = {}) {
@@ -117,7 +118,8 @@ export async function fetchAdminRegistrations(filters: { search?: string; status
   const res = await fetch(`${API_BASE}/admin/registrations?${params.toString()}`, {
     headers: { ...getAdminAuthHeader() }
   });
-  return res.json();
+  const json = await res.json();
+  return json.registrations ?? [];
 }
 
 export async function fetchAdminStudents(filters: { search?: string; branch?: string; year?: string } = {}) {
@@ -129,21 +131,24 @@ export async function fetchAdminStudents(filters: { search?: string; branch?: st
   const res = await fetch(`${API_BASE}/admin/students?${params.toString()}`, {
     headers: { ...getAdminAuthHeader() }
   });
-  return res.json();
+  const json = await res.json();
+  return json.students ?? [];
 }
 
 export async function fetchAdminTeams() {
   const res = await fetch(`${API_BASE}/admin/teams`, {
     headers: { ...getAdminAuthHeader() }
   });
-  return res.json();
+  const json = await res.json();
+  return json.teams ?? [];
 }
 
 export async function fetchAdminPayments() {
   const res = await fetch(`${API_BASE}/admin/payments`, {
     headers: { ...getAdminAuthHeader() }
   });
-  return res.json();
+  const json = await res.json();
+  return json.payments ?? [];
 }
 
 export async function verifyAdminPayment(paymentId: string) {
@@ -177,12 +182,14 @@ export async function fetchAuditLogs() {
   const res = await fetch(`${API_BASE}/admin/audit-logs`, {
     headers: { ...getAdminAuthHeader() }
   });
-  return res.json();
+  const json = await res.json();
+  return json.logs ?? [];
 }
 
 export async function fetchEmailLogs() {
   const res = await fetch(`${API_BASE}/admin/email-logs`, {
     headers: { ...getAdminAuthHeader() }
   });
-  return res.json();
+  const json = await res.json();
+  return json.emails ?? [];
 }
