@@ -27,9 +27,28 @@ Atlas must already have:
 
 ## 2. Create the Render service
 
+The live service tracks **`deploy/production`**, not `main`. Deploying is then a
+deliberate merge into that branch, and work landing on `main` never goes live by
+itself.
+
 1. **render.com** → New → **Web Service** → connect the GitHub repo
-2. Render reads `render.yaml` and fills in the runtime, build and start commands
-3. Pick the **Free** plan, region **Singapore** (closest free region to India)
+2. **Set Branch to `deploy/production`.** Render offers `main` by default; change it
+   here, or the service will track the wrong branch and the blueprint's own
+   `branch:` line will not correct it after the fact.
+3. Render reads `render.yaml` and fills in the runtime, build and start commands
+4. Pick the **Free** plan, region **Singapore** (closest free region to India)
+
+### Releasing afterwards
+
+```
+git checkout deploy/production
+git merge main          # or the branch you want live
+git push                # Render redeploys on push
+```
+
+Auto-deploy is on by default, so any push to `deploy/production` ships. Turn it off
+under Settings → Build & Deploy if you would rather press Deploy by hand during the
+event.
 
 If you would rather configure it by hand instead of using the blueprint:
 
