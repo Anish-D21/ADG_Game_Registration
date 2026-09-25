@@ -105,8 +105,18 @@ async function startServer() {
     console.log(`[DECEPTION Engine] ${signal} received - saving before exit.`);
     stopPeriodicFlush();
     if (isEnabled()) {
-      await flush(store, { force: true });
-      console.log('[Persistence] Final save complete.');
+      // Say what actually happened. Claiming success on a failed save is worse than
+      // saying nothing, because it hides exactly the loss you needed to know about.
+      const saved = await flush(store, { force: true });
+      if (saved) {
+        console.log('[Persistence] Final save complete.');
+      } else {
+        console.error('[Persistence] FINAL SAVE FAILED - retrying once.');
+        const retried = await flush(store, { force: true });
+        console[retried ? 'log' : 'error'](
+          retried ? '[Persistence] Retry succeeded.' : '[Persistence] RETRY FAILED - recent changes may be lost.'
+        );
+      }
     }
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(0), 5000).unref();

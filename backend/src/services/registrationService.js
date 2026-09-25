@@ -80,9 +80,15 @@ export class RegistrationService {
       seenEmails.add(normEmail);
       seenStudentIds.add(normStudentId);
 
-      // A participant may only appear in one squad. Look for an existing student
-      // record and check whether it is already attached to a live registration.
-      const existing = store.students.find(
+      // Whether one person may appear in more than one squad is an event decision,
+      // not a technical one: a single live match cannot have you in two teams, but a
+      // two-day event with several slots reasonably could. ALLOW_MULTIPLE_TEAMS
+      // overrides the config default.
+      const allowMultiple = process.env.ALLOW_MULTIPLE_TEAMS === 'true'
+        || (process.env.ALLOW_MULTIPLE_TEAMS === undefined
+            && EVENT_CONFIG.registrationConfig.allowMultipleTeams === true);
+
+      const existing = allowMultiple ? null : store.students.find(
         st => st.email.toLowerCase() === normEmail || st.studentId.toUpperCase() === normStudentId
       );
       if (existing) {

@@ -24,9 +24,12 @@ export const COLLECTIONS = [
 const META = '_meta';
 
 let enabled = false;
-let flushing = false;
 let dirty = false;
 let timer = null;
+// The flush currently in flight, if any. Callers await it rather than being turned
+// away: a shutdown that returns early while a write is still travelling to Atlas
+// reports success and then kills the very write it was supposed to wait for.
+let inFlight = null;
 
 export function isEnabled() {
   return enabled;
@@ -141,39 +144,48 @@ function migrateLegacyPayments(store) {
  * records, so there is no tombstone handling to do.
  */
 export async function flush(store, { force = false } = {}) {
-  if (!enabled || flushing) return false;
+  if (!enabled) return false;
+
+  // Coalesce: if a save is already running, wait for it, then run once more so any
+  // change made during it is included. Never return while writes are outstanding.
+  if (inFlight) {
+    await inFlight;
+    if (!dirty && !force) return true;
+  }
   if (!dirty && !force) return false;
 
-  flushing = true;
-  dirty = false;
-  try {
-    for (const name of COLLECTIONS) {
-      const rows = store[name];
-      if (!Array.isArray(rows) || rows.length === 0) continue;
+  const run = (async () => {
+    dirty = false;
+    try {
+      for (const name of COLLECTIONS) {
+        const rows = store[name];
+        if (!Array.isArray(rows) || rows.length === 0) continue;
 
-      const ops = rows.map(doc => ({
-        replaceOne: {
-          filter: { _id: doc._id },
-          replacement: doc,
-          upsert: true
-        }
-      }));
-      await db().collection(name).bulkWrite(ops, { ordered: false });
+        const ops = rows.map(doc => ({
+          replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true }
+        }));
+        await db().collection(name).bulkWrite(ops, { ordered: false });
+      }
+
+      await db().collection(META).replaceOne(
+        { _id: 'counters' },
+        { _id: 'counters', registrationCounter: store.registrationCounter, updatedAt: new Date() },
+        { upsert: true }
+      );
+      return true;
+    } catch (err) {
+      // Re-arm so the next opportunity retries rather than silently dropping the change.
+      dirty = true;
+      console.error('[Persistence] Flush failed:', err.message);
+      return false;
     }
+  })();
 
-    await db().collection(META).replaceOne(
-      { _id: 'counters' },
-      { _id: 'counters', registrationCounter: store.registrationCounter, updatedAt: new Date() },
-      { upsert: true }
-    );
-    return true;
-  } catch (err) {
-    // Re-arm so the next opportunity retries rather than silently dropping the change.
-    dirty = true;
-    console.error('[Persistence] Flush failed:', err.message);
-    return false;
+  inFlight = run;
+  try {
+    return await run;
   } finally {
-    flushing = false;
+    if (inFlight === run) inFlight = null;
   }
 }
 
