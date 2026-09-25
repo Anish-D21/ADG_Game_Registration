@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { fetchGameInfo } from '../services/api.ts';
 import { useEventConfig } from '../services/useEventConfig.ts';
 import { 
@@ -105,6 +105,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   // a real ID photo is a few MB, so without this the card sits silent for seconds
   // and students assume it has hung.
   const [uploadingIds, setUploadingIds] = useState<Record<number, boolean>>({});
+
+  // The error banner sits at the top of the form and the Next buttons at the bottom,
+  // several screens apart on a phone. Without this a failed validation looks like a
+  // button that simply does nothing.
+  const errorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (errorMsg) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [errorMsg]);
   const [proofName, setProofName] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
@@ -603,7 +611,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
       {/* Error Alert Display */}
       {errorMsg && (
-        <div className="p-3.5 sm:p-4 bg-[#E5005A] text-white border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
+        <div ref={errorRef} className="p-3.5 sm:p-4 bg-[#E5005A] text-white border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
           <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-[#F4C430]" />
           <div className="text-xs sm:text-sm font-arcade tracking-wide leading-relaxed">
             {errorMsg}
@@ -955,6 +963,11 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6">
+              {errorMsg && (
+                <div className="w-full sm:w-auto sm:flex-1 order-first sm:order-none p-2.5 bg-[#E5005A] text-white border-2 border-[#111827] text-[11px] font-arcade leading-snug">
+                  {errorMsg}
+                </div>
+              )}
               <button
                 onClick={prevStep}
                 className="w-full sm:w-auto bg-[#FFFDF0] text-[#111827] font-arcade text-xs px-5 py-3 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex items-center justify-center gap-2 hover:bg-[#F7E8B5]"
