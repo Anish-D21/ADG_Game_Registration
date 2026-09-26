@@ -25,7 +25,7 @@ export const GameInfoPage: React.FC<GameInfoPageProps> = ({ setActiveTab }) => {
       {/* The 4 Core Gameplay Phases */}
       <div className="space-y-6">
         <h2 className="font-arcade text-2xl text-[#111827] font-bold border-b-3 border-[#111827] pb-2">
-          THE 4 PHASES OF PLAY
+          THE FOUR PHASES OF PLAY
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,7 +120,13 @@ export const GameInfoPage: React.FC<GameInfoPageProps> = ({ setActiveTab }) => {
       {/* CTA Button */}
       <div className="text-center pt-4">
         <button
-          onClick={() => setActiveTab('register')}
+          onClick={() => {setActiveTab('register');
+            window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+          }}
           className="bg-[#E5005A] text-white font-arcade text-sm px-8 py-3.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#111827] hover:bg-[#111827] transition-colors"
         >
           READY TO PLAY? REGISTER SQUAD (5–6 PLAYERS)

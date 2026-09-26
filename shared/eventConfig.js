@@ -10,7 +10,7 @@ export const EVENT_CONFIG = {
   tagline: "ONE OF YOU ISN'T WHO THEY SEEM..",
   warningQuote: "TRUST NO ONE",
   organizer: "AI DEVELOPERS GROUP (ADG)",
-  collaboration: "ADG x MosaIC",
+  collaboration: "ADG x Mosaic",
   eventDateDisplay: "16, 17 OCT 2026",
   startDate: "2026-10-16",
   endDate: "2026-10-17",
@@ -26,7 +26,7 @@ export const EVENT_CONFIG = {
     requireCollegeEmail: true,
     collegeEmailDomain: "@student.sfit.ac.in",
     requireCollegeId: true,
-    branches: ["CMPN", "INFT", "EXTC", "ELEC", "MECH", "AIDS", "CSBS", "OTHER"],
+    branches: [ "AIML", "CMPN", "INFT", "EXTC", "ELEC", "MECH", "ECS", "OTHER"],
     years: ["FE", "SE", "TE", "BE"]
   },
 

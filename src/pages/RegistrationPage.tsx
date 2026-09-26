@@ -732,18 +732,23 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                           0{idx + 1}
                         </span>
                         <h3 className="font-arcade text-xs sm:text-sm font-bold text-[#111827] truncate">
-                          {isLeader ? 'PLAYER 01 (LEADER)' : `PLAYER 0${idx + 1}`}
+                          {isLeader ? 'PLAYER 01' : `PLAYER 0${idx + 1}`}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <div className="flex flex-col items-end gap-1 shrink-0">
                         {isLeader && (
                           <span className="bg-[#E5005A] text-white font-pixel text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 border border-[#111827]">
                             LEADER
                           </span>
                         )}
-                        <span className={`font-pixel text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 border border-[#111827] ${
-                          p.isSfit ? 'bg-[#F4C430] text-[#111827]' : 'bg-[#00AFC6] text-white'
-                        }`}>
+
+                        <span
+                          className={`font-pixel text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 border border-[#111827] ${
+                            p.isSfit
+                              ? 'bg-[#F4C430] text-[#111827]'
+                              : 'bg-[#00AFC6] text-white'
+                          }`}
+                        >
                           {p.isSfit ? 'SFIT' : 'NON-SFIT'}
                         </span>
                       </div>
@@ -862,13 +867,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                       {/* Student ID / Roll No */}
                       <div>
                         <label className="block font-arcade text-[11px] font-bold text-[#111827] mb-1">
-                          {p.isSfit ? 'SFIT Roll No / Student ID *' : 'College Roll No / Student ID *'}
+                          {p.isSfit ? 'SFIT PID *' : 'College Student ID *'}
                         </label>
                         <input
                           type="text"
                           value={p.studentId}
                           onChange={(e) => updatePlayerField(idx, 'studentId', e.target.value)}
-                          placeholder={p.isSfit ? "e.g. SFIT2024-042" : "e.g. 2024-EX-102"}
+                          placeholder={p.isSfit ? "e.g. 266001" : "e.g. 2024-EX-102"}
                           className="w-full px-3 py-2 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] text-xs uppercase focus:outline-none"
                         />
                       </div>

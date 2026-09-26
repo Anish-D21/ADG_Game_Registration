@@ -152,7 +152,7 @@ export function PaymentDeskPage() {
             </div>
             <div>
               <h1 className="font-pixel text-sm">PAYMENT DESK</h1>
-              <p className="text-xs text-[#111827]/60">ADG x MosaIC · Organiser access</p>
+              <p className="text-xs text-[#111827]/60">ADG x Mosaic · Organiser access</p>
             </div>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">

@@ -286,7 +286,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
 
     doc.setFontSize(10);
     doc.setTextColor(0, 175, 198);
-    doc.text('AI DEVELOPERS GROUP (ADG) x MosaIC • SFIT ROOM NO. 318', 14, 28);
+    doc.text('AI DEVELOPERS GROUP (ADG) x Mosaic • SFIT ROOM NO. 318', 14, 28);
     doc.text(`Dates: 16–17 October 2026`, 14, 34);
 
     // Registration Details Box
