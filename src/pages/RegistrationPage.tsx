@@ -525,7 +525,11 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         </div>
         <div className="w-full sm:w-auto bg-[#00AFC6] text-white font-pixel text-xs px-3.5 sm:px-4 py-2 border-2 sm:border-3 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] flex sm:flex-col items-center justify-between sm:justify-center text-center shrink-0">
           <div>ENTRY FEE</div>
-          <div className="text-base font-bold">{money(payCfg.perHeadAmount)} / PLAYER</div>
+          <div className="text-base font-pixel font-bold">
+            <span className="text-xl">₹</span>
+            <span className="ml-1">{payCfg.perHeadAmount}</span>
+            <span className="ml-1">/ PLAYER</span>
+          </div>
         </div>
       </div>
 
@@ -1104,7 +1108,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-8 space-y-5 sm:space-y-6">
           <div className="border-b-2 border-[#111827] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="font-arcade text-lg sm:text-xl text-[#111827] font-bold">
+              <h2 className="font-pixel text-lg sm:text-xl text-[#111827] font-bold">
                 STEP 4: FINAL REVIEW & CONFIRMATION
               </h2>
               <p className="text-xs font-body text-[#111827]/80">
@@ -1137,18 +1141,42 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
           <div className="block md:hidden space-y-3">
             {players.map((p, idx) => (
               <div key={idx} className="p-3 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] space-y-2 text-xs">
-                <div className="flex items-center justify-between border-b border-[#111827]/20 pb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-pixel text-[10px] text-[#E5005A]">0{idx + 1}.</span>
-                    <span className="font-bold text-[#111827]">{p.fullName}</span>
-                    {idx === 0 && <span className="text-[#E5005A] text-[9px] font-pixel ml-1">[LEADER]</span>}
-                  </div>
-                  <span className={`px-2 py-0.5 font-pixel text-[9px] border border-[#111827] ${
-                    p.isSfit ? 'bg-[#F4C430] text-[#111827]' : 'bg-[#00AFC6] text-white'
-                  }`}>
-                    {p.isSfit ? 'SFIT' : 'NON-SFIT'}
-                  </span>
-                </div>
+                <div className="flex items-start justify-between border-b border-[#111827]/20 pb-1.5">
+    
+    {/* Player name */}
+    <div className="flex items-center gap-1.5 min-w-0 pr-2">
+      <span className="font-pixel text-[10px] text-[#E5005A] shrink-0">
+        0{idx + 1}.
+      </span>
+
+      <span className="font-bold text-[#111827] truncate">
+        {p.fullName}
+      </span>
+    </div>
+
+    {/* Right-side badges */}
+    <div className="flex flex-col items-end gap-1 shrink-0">
+      
+      {/* Leader badge — only for leader */}
+      {idx === 0 && (
+        <span className="text-[#E5005A] text-[9px] font-pixel">
+          [LEADER]
+        </span>
+      )}
+
+      {/* SFIT / NON-SFIT */}
+      <span
+        className={`px-2 py-0.5 font-pixel text-[9px] border border-[#111827] ${
+          p.isSfit
+            ? 'bg-[#F4C430] text-[#111827]'
+            : 'bg-[#00AFC6] text-white'
+        }`}
+      >
+        {p.isSfit ? 'SFIT' : 'NON-SFIT'}
+      </span>
+
+    </div>
+  </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-body text-gray-700">
                   <div>
                     <span className="text-gray-500 block text-[9px]">COLLEGE:</span>
