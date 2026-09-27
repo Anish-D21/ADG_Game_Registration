@@ -15,8 +15,21 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
       {/* Hero Section with Poster Artwork & 4 Steps */}
       <section className="pt-2 sm:pt-8">
         <AmongUsIllustration 
-          onRegisterClick={() => setActiveTab('register')}
-          onExploreClick={() => setActiveTab('game')}
+          onRegisterClick={() => {setActiveTab('register');
+            window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+
+          }}
+          onExploreClick={() => {setActiveTab('game');
+            window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+          }}
         />
       </section>
 
@@ -87,13 +100,25 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
             </p>
             <div className="pt-2 flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
-                onClick={() => setActiveTab('game')}
+                onClick={() => {setActiveTab('game');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }}
                 className="w-full sm:w-auto bg-[#00AFC6] text-[#111827] font-arcade text-xs sm:text-sm px-4 sm:px-5 py-2.5 border-2 border-white shadow-[2px_2px_0_0_#FFF] sm:shadow-[3px_3px_0_0_#FFF] hover:bg-white transition-all flex items-center justify-center gap-2"
               >
                 <span>LEARN GAME MECHANICS</span> <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
               <button
-                onClick={() => setActiveTab('rules')}
+                onClick={() => {setActiveTab('rules');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }}
                 className="w-full sm:w-auto bg-[#F4C430] text-[#111827] font-arcade text-xs sm:text-sm px-4 sm:px-5 py-2.5 border-2 border-white shadow-[2px_2px_0_0_#FFF] sm:shadow-[3px_3px_0_0_#FFF] hover:bg-white transition-all flex items-center justify-center gap-2"
               >
                 READ CODE OF CONDUCT
@@ -112,7 +137,13 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
               CORE RULES PREVIEW
             </h3>
             <button 
-              onClick={() => setActiveTab('rules')}
+              onClick={() => {setActiveTab('rules');
+                window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+              }}
               className="text-xs font-arcade text-[#00AFC6] hover:underline"
             >
               VIEW ALL RULES &gt;
@@ -150,13 +181,25 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
             </p>
             <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
               <button
-                onClick={() => setActiveTab('register')}
+                onClick={() => {setActiveTab('register');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }}
                 className="w-full sm:w-auto bg-[#111827] text-white font-arcade text-xs sm:text-base px-6 sm:px-8 py-3.5 border-2 sm:border-3 border-white shadow-[3px_3px_0_0_#FFF] sm:shadow-[4px_4px_0_0_#FFF] hover:bg-[#00AFC6] hover:text-[#111827] transition-all"
               >
                 START REGISTRATION
               </button>
               <button
-                onClick={() => setActiveTab('status')}
+                onClick={() => {setActiveTab('status');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }}
                 className="w-full sm:w-auto bg-[#FFFDF0] text-[#111827] font-arcade text-xs sm:text-base px-5 sm:px-6 py-3.5 border-2 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] hover:bg-[#F4C430] transition-all"
               >
                 CHECK EXISTING REGISTRATION

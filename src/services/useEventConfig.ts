@@ -57,7 +57,7 @@ export function useEventConfig() {
 
   /** Formats an amount the way the rest of the site shows money. */
   const money = (value: number) =>
-    `${payment.currency === 'INR' ? '₹' : payment.currency + ' '}${Number(value || 0).toLocaleString('en-IN')}`;
+    `${payment.currency === 'INR' ? '₹ ' : payment.currency + ' '}${Number(value || 0).toLocaleString('en-IN')}`;
 
   const amountForTeamSize = (size: number) => payment.perHeadAmount * (Number(size) || 0);
 

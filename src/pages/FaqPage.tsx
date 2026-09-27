@@ -70,7 +70,13 @@ export const FaqPage: React.FC<FaqPageProps> = ({ setActiveTab }) => {
           </p>
         </div>
         <button
-          onClick={() => setActiveTab('register')}
+          onClick={() => {setActiveTab('register');
+            window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+          }}
           className="bg-[#111827] text-white font-arcade text-xs px-6 py-3 border-2 border-[#111827] shadow-[3px_3px_0_0_#FFF] shrink-0"
         >
           GO TO REGISTRATION &gt;

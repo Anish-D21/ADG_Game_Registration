@@ -59,7 +59,13 @@ export const RulesPage: React.FC<RulesPageProps> = ({ setActiveTab }) => {
 
       <div className="text-center pt-2">
         <button
-          onClick={() => setActiveTab('register')}
+          onClick={() => {setActiveTab('register');
+            window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+          }}
           className="bg-[#111827] text-white font-arcade text-xs sm:text-sm px-8 py-3.5 border-3 border-[#111827] shadow-[4px_4px_0_0_#E5005A] hover:bg-[#E5005A] transition-colors"
         >
           I UNDERSTAND • REGISTER SQUAD (5–6 PLAYERS)

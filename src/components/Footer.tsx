@@ -31,7 +31,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             </div>
 
             <p className="text-sm text-gray-300 max-w-md font-body leading-relaxed">
-              "{EVENT_CONFIG.tagline}" An intense live-action social deduction and engineering challenge held at St. Francis Institute of Technology. Complete physical lab tasks, track player alibis, and vote out the imposter before sabotage prevails.
+              "<span className="tracking-[0.15em]">{EVENT_CONFIG.tagline}</span>"<br></br> An intense live-action social deduction and engineering challenge held at St. Francis Institute of Technology. Complete physical lab tasks, track player alibis, and vote out the imposter before sabotage prevails.
             </p>
 
             <div className="flex flex-wrap gap-2 pt-2">
@@ -54,32 +54,80 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             </h4>
             <ul className="space-y-2 text-xs font-arcade">
               <li>
-                <button onClick={() => setActiveTab('home')} className="hover:text-[#00AFC6] transition-colors">
+                <button onClick={() => {
+                  setActiveTab('home');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }} 
+                className="hover:text-[#00AFC6] transition-colors">
                   &gt; Home Overview
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('game')} className="hover:text-[#00AFC6] transition-colors">
+                <button onClick={() => {
+                  setActiveTab('game');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }} 
+                className="hover:text-[#00AFC6] transition-colors">
                   &gt; How The Game Works
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('rules')} className="hover:text-[#00AFC6] transition-colors">
+                <button onClick={() => {
+                  setActiveTab('rules');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }} 
+                className="hover:text-[#00AFC6] transition-colors">
                   &gt; Official Rules & Ethics
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('faq')} className="hover:text-[#00AFC6] transition-colors">
+                <button onClick={() => {
+                  setActiveTab('faq');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }} 
+                className="hover:text-[#00AFC6] transition-colors">
                   &gt; Frequently Asked Questions
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('register')} className="hover:text-[#E5005A] text-[#F7E8B5] transition-colors">
+                <button onClick={() => {
+                  setActiveTab('register');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });}
+                } 
+                className="hover:text-[#E5005A] text-[#F7E8B5] transition-colors">
                   &gt; Register Squad (5-6 Players)
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('status')} className="hover:text-[#00AFC6] transition-colors">
+                <button onClick={() => {
+                  setActiveTab('status');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }} 
+                className="hover:text-[#00AFC6] transition-colors">
                   &gt; Check Status / Download Pass
                 </button>
               </li>
@@ -108,7 +156,14 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
 
             <div className="pt-2">
               <button
-                onClick={() => setActiveTab('status')}
+                onClick={() => {
+                  setActiveTab('status');
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+                }}
                 className="w-full inline-flex items-center justify-center gap-2 bg-[#F4C430] text-[#111827] font-arcade text-xs px-3 py-2.5 border-2 border-white hover:bg-white transition-all shadow-[2px_2px_0_0_#000]"
               >
                 CHECK SQUAD STATUS &gt;
@@ -119,7 +174,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
 
         {/* Bottom copyright */}
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 font-display">
-          <p>© 2026 AI Developers Group (ADG) x MosaIC. All rights reserved.</p>
+          <p>© 2026 AI Developers Group (ADG) x Mosaic. All rights reserved.</p>
           <p className="flex items-center gap-1 mt-2 sm:mt-0">
             Engineered for <span className="text-[#F7E8B5] font-bold">St. Francis Institute of Technology</span> • Venue TBD
           </p>
@@ -127,13 +182,27 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               should not sit in a participant's main navigation either. */}
           <p className="mt-2 sm:mt-0 flex items-center gap-3">
             <button
-              onClick={() => setActiveTab('payments')}
+              onClick={() => {
+                setActiveTab('payments');
+                window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+              }}
               className="text-gray-600 hover:text-[#F4C430] transition-colors"
             >
               Payment Desk
             </button>
             <button
-              onClick={() => setActiveTab('admin')}
+              onClick={() =>  {
+                setActiveTab('admin');
+                window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                  });
+              }}
               className="text-gray-600 hover:text-[#F4C430] transition-colors"
             >
               Organiser Login

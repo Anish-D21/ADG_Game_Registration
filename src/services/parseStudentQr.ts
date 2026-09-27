@@ -40,8 +40,12 @@ function flatten(obj: any, out: Record<string, string> = {}): Record<string, str
   return out;
 }
 
-const BRANCHES = ['CMPN', 'INFT', 'EXTC', 'ELEC', 'MECH', 'AIDS', 'CSBS'];
-const YEARS = ['FE', 'SE', 'TE', 'BE'];
+// Read the live lists rather than repeating them: the branch options have already
+// changed once, and a parser mapping onto values the dropdown no longer offers would
+// silently produce an unselectable field.
+import { EVENT_CONFIG } from '../../shared/eventConfig.js';
+const BRANCHES: string[] = EVENT_CONFIG.participantConfig.branches;
+const YEARS: string[] = EVENT_CONFIG.participantConfig.years;
 
 /** Map free text onto the dropdown values, since a card may say "Computer" or "3rd Year". */
 function toBranch(v?: string) {
@@ -54,8 +58,8 @@ function toBranch(v?: string) {
   if (/EXTC|ELECTRONIC.*TELE|ETC/.test(u)) return 'EXTC';
   if (/ELEC/.test(u)) return 'ELEC';
   if (/MECH/.test(u)) return 'MECH';
-  if (/AI|DATA|AIDS|AIML/.test(u)) return 'AIDS';
-  if (/CSBS|BUSINESS/.test(u)) return 'CSBS';
+  if (/AIML|AI|DATA|MACHINE/.test(u)) return BRANCHES.includes('AIML') ? 'AIML' : 'OTHER';
+  if (/ECS|CSBS|BUSINESS/.test(u)) return BRANCHES.includes('ECS') ? 'ECS' : 'OTHER';
   return 'OTHER';
 }
 

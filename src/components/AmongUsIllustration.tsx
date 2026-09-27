@@ -46,7 +46,7 @@ export const AmongUsIllustration: React.FC<IllustrationProps> = ({ onRegisterCli
             {EVENT_CONFIG.eventDateDisplay}
           </span>
           <span className="bg-[#FFFDF0] text-[#111827] font-arcade text-xs sm:text-sm px-2.5 sm:px-3 py-1 sm:py-1.5 border-2 border-[#111827] shadow-[2px_2px_0_0_#111827]">
-            <span className="text-[#4CAF50] font-bold">ADG</span> x <span className="text-[#E5005A] font-bold">MosAIC</span>
+            <span className="text-[#4CAF50] font-bold">ADG</span> x <span className="text-[#E5005A] font-bold">Mosaic</span>
           </span>
         </div>
       </div>
