@@ -20,7 +20,7 @@ export const RulesPage: React.FC<RulesPageProps> = ({ setActiveTab }) => {
           RULES & CODE OF CONDUCT
         </h1>
         <p className="text-sm font-body text-[#111827]/80 mt-2">
-          Strict adherence to tournament rules ensures a competitive, exhilarating, and fair mystery experience in Room 318.
+          Strict adherence to tournament rules ensures a competitive, exhilarating, and fair mystery experience in Venue TBD.
         </p>
       </div>
 

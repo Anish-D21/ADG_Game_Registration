@@ -85,7 +85,7 @@ We have received your team registration for DECEPTION (ADG x MosaIC).
 Event Details:
 - Event: DECEPTION
 - Dates: 16–17 October 2026
-- Venue: Room No. 318, SFIT
+- Venue: Venue TBD, SFIT
 - Team Name: ${teamName}
 - Registration ID: ${registrationId}
 - Current Status: PAYMENT PENDING
@@ -97,7 +97,7 @@ Stay sharp. One of you isn't who they seem...
 
 Regards,
 AI Developers Group (ADG) x MosaIC
-Room No. 318
+Venue TBD
     `;
 
     return this.logEmail({
@@ -120,14 +120,14 @@ Your team "${teamName}" is officially CONFIRMED for DECEPTION!
 TICKET DETAILS:
 - Ticket Number: ${ticketNumber}
 - Registration ID: ${registrationId}
-- Venue: Room No. 318, St. Francis Institute of Technology (SFIT)
+- Venue: Venue TBD, St. Francis Institute of Technology (SFIT)
 - Dates: 16–17 October 2026
 - Mandatory: Carry your college ID cards and your digital/printed QR Pass.
 
 Download your Combined Entry Pass & Payment Receipt at:
 /registration/status?id=${registrationId}
 
-"TRUST NO ONE." See you in Room 318!
+"TRUST NO ONE." See you in Venue TBD!
 
 AI Developers Group (ADG)
     `;

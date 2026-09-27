@@ -369,7 +369,7 @@ export const AdminPage: React.FC = () => {
               ORGANIZER OPERATIONAL SUMMARY
             </h3>
             <p className="text-xs font-body text-[#111827]/90 leading-relaxed">
-              DECEPTION matches take place on <strong>16 & 17 October 2026</strong> in <strong>Room No. 318</strong>. All squads have 5 or 6 participants. When payments are confirmed, ticket QR codes are automatically generated for seamless check-in at the entrance.
+              DECEPTION matches take place on <strong>16 & 17 October 2026</strong> in <strong>Venue TBD</strong>. All squads have 5 or 6 participants. When payments are confirmed, ticket QR codes are automatically generated for seamless check-in at the entrance.
             </p>
             <div className="flex flex-wrap gap-2 pt-2">
               <button

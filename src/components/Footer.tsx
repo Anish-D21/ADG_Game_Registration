@@ -102,7 +102,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               </div>
               <div className="flex items-center gap-2 text-gray-300">
                 <MapPin className="w-4 h-4 text-[#E5005A] shrink-0" />
-                <span>Room No. 318, 3rd Floor, SFIT</span>
+                <span>Venue TBD, 3rd Floor, SFIT</span>
               </div>
             </div>
 
@@ -121,7 +121,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 font-display">
           <p>© 2026 AI Developers Group (ADG) x MosaIC. All rights reserved.</p>
           <p className="flex items-center gap-1 mt-2 sm:mt-0">
-            Engineered for <span className="text-[#F7E8B5] font-bold">St. Francis Institute of Technology</span> • Room 318
+            Engineered for <span className="text-[#F7E8B5] font-bold">St. Francis Institute of Technology</span> • Venue TBD
           </p>
           {/* Organisers need a way in that does not mean remembering a URL, but it
               should not sit in a participant's main navigation either. */}

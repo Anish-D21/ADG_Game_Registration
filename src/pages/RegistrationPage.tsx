@@ -9,6 +9,8 @@ import {
   createPaymentOrder
 } from '../services/api.ts';
 import QRCode from 'qrcode';
+import { QrScanner } from '../components/QrScanner.tsx';
+import { parseStudentQr } from '../services/parseStudentQr.ts';
 import { EVENT_CONFIG } from '../../shared/eventConfig.js';
 import { 
   Users, 
@@ -105,6 +107,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   // a real ID photo is a few MB, so without this the card sits silent for seconds
   // and students assume it has hung.
   const [uploadingIds, setUploadingIds] = useState<Record<number, boolean>>({});
+  // Which player card opened the scanner, and what the last scan produced.
+  const [scanningFor, setScanningFor] = useState<number | null>(null);
+  const [scanNote, setScanNote] = useState<Record<number, string>>({});
 
   // The error banner sits at the top of the form and the Next buttons at the bottom,
   // several screens apart on a phone. Without this a failed validation looks like a
@@ -201,10 +206,6 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         setErrorMsg(`${playerTag}: Full Name is required.`);
         return false;
       }
-      if (!p.studentId.trim()) {
-        setErrorMsg(`${playerTag}: Student ID / Roll No is required.`);
-        return false;
-      }
 
       // Check Non-SFIT College Name requirement
       if (!p.isSfit) {
@@ -250,13 +251,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         setErrorMsg(`Duplicate email within squad: "${normEmail}". Each player must have a unique email.`);
         return false;
       }
-      if (studentIds.has(normId)) {
+      // Blank roll numbers are allowed and several of them are not a clash.
+      if (normId && studentIds.has(normId)) {
         setErrorMsg(`Duplicate Student ID within squad: "${normId}". Each player must have a unique student ID.`);
         return false;
       }
 
       emails.add(normEmail);
-      studentIds.add(normId);
+      if (normId) studentIds.add(normId);
     }
 
     setErrorMsg(null);
@@ -410,6 +412,30 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       ]
     : [];
 
+  // Scanning is the primary route; typing is always available underneath. A QR we
+  // cannot read must say so rather than silently doing nothing.
+  const handleScan = (idx: number, raw: string) => {
+    const parsed = parseStudentQr(raw);
+    setScanningFor(null);
+    if (!parsed) {
+      setScanNote(prev => ({ ...prev, [idx]: 'That QR did not contain readable student details — please type them in.' }));
+      return;
+    }
+    const filled: string[] = [];
+    (Object.keys(parsed) as (keyof typeof parsed)[]).forEach(key => {
+      const value = parsed[key];
+      if (!value) return;
+      updatePlayerField(idx, key as any, value);
+      filled.push(key);
+    });
+    // A college on the card means they are not an SFIT student by default.
+    if (parsed.college && !/sfit|st\.?\s*francis/i.test(parsed.college)) {
+      setPlayerCollegeType(idx, false);
+      updatePlayerField(idx, 'college', parsed.college);
+    }
+    setScanNote(prev => ({ ...prev, [idx]: `Filled ${filled.length} field${filled.length === 1 ? '' : 's'} from the QR — check them before continuing.` }));
+  };
+
   // Step Navigation
   const nextStep = () => {
     if (currentStep === 1 && !validateStep1()) return;
@@ -514,7 +540,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       <div className="bg-[#FFFDF0] border-3 sm:border-4 border-[#111827] shadow-[4px_4px_0_0_#111827] sm:shadow-[6px_6px_0_0_#111827] p-4 sm:p-6 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <span className="bg-[#E5005A] text-white font-pixel text-[10px] sm:text-xs px-2.5 py-0.5 sm:py-1 border-2 border-[#111827] inline-block">
-            ROOM 318 ENTRANCE
+            VENUE TBD ENTRANCE
           </span>
           <h1 className="font-pixel text-xl sm:text-3xl text-[#111827] mt-2 tracking-wider">
             SQUAD REGISTRATION
@@ -610,6 +636,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       </div>
 
       {/* Error Alert Display */}
+      {scanningFor !== null && (
+        <QrScanner
+          onResult={(raw) => handleScan(scanningFor, raw)}
+          onClose={() => setScanningFor(null)}
+        />
+      )}
+
       {errorMsg && (
         <div ref={errorRef} className="p-3.5 sm:p-4 bg-[#E5005A] text-white border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] flex items-center gap-3">
           <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-[#F4C430]" />
@@ -642,7 +675,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 type="text"
                 value={teamName}
                 onChange={(e) => { setTeamName(e.target.value); setErrorMsg(null); }}
-                placeholder="e.g. The Suspects, Room 318 Crew, Binary Imposters"
+                placeholder="e.g. The Suspects, Venue TBD Crew, Binary Imposters"
                 className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#FFFDF0] border-2 border-[#111827] shadow-[2px_2px_0_0_#111827] sm:shadow-[3px_3px_0_0_#111827] font-body text-xs sm:text-sm focus:outline-none focus:bg-[#FFF]"
               />
             </div>
@@ -816,6 +849,23 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                       </div>
                     </div>
 
+                    {/* Scan first, type second */}
+                    <div className="mb-3 space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => { setScanningFor(idx); setScanNote(prev => ({ ...prev, [idx]: '' })); }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-[#111827] bg-[#00AFC6] text-white font-arcade text-[11px] shadow-[2px_2px_0_0_#111827] hover:bg-[#111827]"
+                      >
+                        <QrCode className="w-4 h-4" /> SCAN STUDENT QR TO FILL
+                      </button>
+                      {scanNote[idx] && (
+                        <p className={`text-[10px] leading-snug ${/did not contain/.test(scanNote[idx]) ? 'text-[#C62828]' : 'text-[#2E7D32]'}`}>
+                          {scanNote[idx]}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-[#111827]/50 text-center">or fill the fields in manually</p>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-xs font-body">
                       {/* Full Name */}
                       <div>
@@ -862,7 +912,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                       {/* Student ID / Roll No */}
                       <div>
                         <label className="block font-arcade text-[11px] font-bold text-[#111827] mb-1">
-                          {p.isSfit ? 'SFIT Roll No / Student ID *' : 'College Roll No / Student ID *'}
+                          {p.isSfit ? 'SFIT Roll No / Student ID *' : 'College Roll No / Student ID (optional)'}
                         </label>
                         <input
                           type="text"
@@ -995,7 +1045,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               STEP 3: COLLEGE IDENTITY CARD UPLOADS
             </h2>
             <p className="text-xs font-body text-[#111827]/80">
-              Upload photo/scan of college identity cards to ensure verification at Room 318 entrance.
+              Upload photo/scan of college identity cards to ensure verification at Venue TBD entrance.
             </p>
           </div>
 
@@ -1117,7 +1167,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <span className="text-[10px] font-pixel text-[#E5005A] uppercase">SQUAD NAME</span>
               <h3 className="font-pixel text-base sm:text-xl text-[#111827]">{teamName}</h3>
               <p className="text-xs font-body text-[#111827]/80 mt-0.5">
-                Size: {teamSize} Players • Venue: Room No. 318 • Event: 16–17 Oct 2026
+                Size: {teamSize} Players • Venue: Venue TBD • Event: 16–17 Oct 2026
               </p>
             </div>
             <button

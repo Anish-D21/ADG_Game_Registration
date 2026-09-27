@@ -50,9 +50,8 @@ export class RegistrationService {
       if (!p.fullName || !p.fullName.trim()) {
         throw new Error(`Player ${playerNum}: Full name is required.`);
       }
-      if (!p.studentId || !p.studentId.trim()) {
-        throw new Error(`Player ${playerNum}: Student ID / Roll number is required.`);
-      }
+      // Roll number is optional: not every college issues one a student knows by
+      // heart, and the ID card upload is the real proof of enrolment.
       if (!p.email || !p.email.trim()) {
         throw new Error(`Player ${playerNum}: College email is required.`);
       }
@@ -68,17 +67,18 @@ export class RegistrationService {
       p.mobile = digits;
 
       const normEmail = p.email.trim().toLowerCase();
-      const normStudentId = p.studentId.trim().toUpperCase();
+      const normStudentId = (p.studentId || '').trim().toUpperCase();
 
       if (seenEmails.has(normEmail)) {
         throw new Error(`Duplicate email within team: "${normEmail}" was provided for multiple players.`);
       }
-      if (seenStudentIds.has(normStudentId)) {
+      // Only a supplied roll number can clash; several blanks are not a duplicate.
+      if (normStudentId && seenStudentIds.has(normStudentId)) {
         throw new Error(`Duplicate Student ID within team: "${normStudentId}" was provided for multiple players.`);
       }
 
       seenEmails.add(normEmail);
-      seenStudentIds.add(normStudentId);
+      if (normStudentId) seenStudentIds.add(normStudentId);
 
       // Whether one person may appear in more than one squad is an event decision,
       // not a technical one: a single live match cannot have you in two teams, but a
@@ -89,7 +89,8 @@ export class RegistrationService {
             && EVENT_CONFIG.registrationConfig.allowMultipleTeams === true);
 
       const existing = allowMultiple ? null : store.students.find(
-        st => st.email.toLowerCase() === normEmail || st.studentId.toUpperCase() === normStudentId
+        st => st.email.toLowerCase() === normEmail
+          || (normStudentId && (st.studentId || '').toUpperCase() === normStudentId)
       );
       if (existing) {
         const activeMembership = store.teamMembers.find(tm => tm.studentId === existing._id);

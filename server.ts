@@ -75,7 +75,7 @@ async function startServer() {
       service: 'DECEPTION Event Registration System',
       event: 'DECEPTION - ADG x MosaIC',
       date: '16-17 Oct 2026',
-      venue: 'Room No. 318',
+      venue: 'Venue TBD',
       env: process.env.NODE_ENV || 'development'
     });
   });
@@ -97,7 +97,7 @@ async function startServer() {
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`[DECEPTION Engine] Running on http://localhost:${PORT}`);
-    console.log(`[DECEPTION Engine] Ready. Theme: Among Us / Room No. 318`);
+    console.log(`[DECEPTION Engine] Ready. Theme: Among Us / Venue TBD`);
   });
 
   // Render sends SIGTERM before recycling an instance; persist before we lose the process.

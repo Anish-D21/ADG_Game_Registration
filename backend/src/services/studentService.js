@@ -21,7 +21,7 @@ export class StudentService {
    */
   async upsertStudent(data) {
     const email = data.email.trim().toLowerCase();
-    const studentId = data.studentId.trim().toUpperCase();
+    const studentId = (data.studentId || '').trim().toUpperCase();
 
     // Determine whether this student is SFIT or Non-SFIT
     const isSfit = data.isSfit !== undefined
@@ -43,8 +43,11 @@ export class StudentService {
     }
 
     // Deduplication check: existing by email or student ID
+    // Match on email always; on roll number only when one was given, or every
+    // student without one would collide with the first such record.
     let student = store.students.find(
-      s => s.email.toLowerCase() === email || s.studentId.toUpperCase() === studentId
+      s => s.email.toLowerCase() === email
+        || (studentId && (s.studentId || '').toUpperCase() === studentId)
     );
 
     if (student) {

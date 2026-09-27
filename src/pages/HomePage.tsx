@@ -31,7 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
               </h2>
             </div>
             <span className="bg-[#F4C430] border-2 border-[#111827] text-[#111827] font-pixel text-[10px] sm:text-xs px-2.5 sm:px-3 py-1 shadow-[2px_2px_0_0_#111827] self-start sm:self-auto">
-              ROOM 318 ACCESS ONLY
+              VENUE TBD ACCESS ONLY
             </span>
           </div>
 
@@ -80,10 +80,10 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
               INVESTIGATION PROTOCOL
             </span>
             <h3 className="font-pixel text-lg sm:text-2xl text-[#F7E8B5] tracking-wider leading-snug">
-              ONE SQUAD. SECRET ROLES. ROOM NO. 318.
+              ONE SQUAD. SECRET ROLES. VENUE TBD.
             </h3>
             <p className="font-body text-gray-300 text-xs sm:text-base leading-relaxed">
-              When your team enters Room 318 on 16 or 17 October, roles will be secretly assigned by our game master system. Most of you are Crewmates working frantically on engineering lab tasks. But one among you is a Saboteur programmed to cause disruption without getting caught.
+              When your team enters Venue TBD on 16 or 17 October, roles will be secretly assigned by our game master system. Most of you are Crewmates working frantically on engineering lab tasks. But one among you is a Saboteur programmed to cause disruption without getting caught.
             </p>
             <div className="pt-2 flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
@@ -146,7 +146,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab }) => {
               ASSEMBLE YOUR SQUAD NOW
             </h3>
             <p className="font-body text-xs sm:text-base text-[#FFFDF0]">
-              Gather your 5 to 6 SFIT teammates, have your college IDs ready, and secure your slot for DECEPTION in Room 318.
+              Gather your 5 to 6 SFIT teammates, have your college IDs ready, and secure your slot for DECEPTION in Venue TBD.
             </p>
             <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
               <button

@@ -197,7 +197,7 @@ export const AmongUsIllustration: React.FC<IllustrationProps> = ({ onRegisterCli
             COMPLETE YOUR TASKS
           </h4>
           <p className="text-xs text-[#111827] font-body">
-            Execute technical and physical lab tasks across Room 318 before the timer runs out.
+            Execute technical and physical lab tasks across Venue TBD before the timer runs out.
           </p>
         </div>
 
@@ -242,7 +242,7 @@ export const AmongUsIllustration: React.FC<IllustrationProps> = ({ onRegisterCli
       </div>
 
       {/* ---------------------------------------------------- */}
-      {/* 4. POSTER MOTIFS: TRUST NO ONE & ROOM 318 */}
+      {/* 4. POSTER MOTIFS: TRUST NO ONE & VENUE TBD */}
       {/* ---------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 my-6">
         <div className="w-full sm:w-auto text-center bg-[#00AFC6] text-white font-pixel text-xs sm:text-base px-4 sm:px-6 py-2 sm:py-2.5 border-3 border-[#111827] shadow-[3px_3px_0_0_#111827] sm:shadow-[4px_4px_0_0_#111827] tracking-normal sm:tracking-widest uppercase">

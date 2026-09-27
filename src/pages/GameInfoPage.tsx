@@ -18,7 +18,7 @@ export const GameInfoPage: React.FC<GameInfoPageProps> = ({ setActiveTab }) => {
           HOW DECEPTION WORKS
         </h1>
         <p className="text-sm sm:text-base font-body text-[#111827]/80 mt-2 max-w-3xl">
-          Inspired by Among Us and social deduction mystery games, DECEPTION transforms SFIT Room No. 318 into a high-octane live-action arena where analytical thinking, deception, and deduction collide.
+          Inspired by Among Us and social deduction mystery games, DECEPTION transforms SFIT Venue TBD into a high-octane live-action arena where analytical thinking, deception, and deduction collide.
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export const GameInfoPage: React.FC<GameInfoPageProps> = ({ setActiveTab }) => {
               <h3 className="font-arcade text-lg text-[#00AFC6] font-bold">THE CREWMATE</h3>
             </div>
             <ul className="text-xs space-y-2 text-gray-300 font-body">
-              <li>• Complete all engineering & physical task cards in Room 318.</li>
+              <li>• Complete all engineering & physical task cards in Venue TBD.</li>
               <li>• Watch fellow team members for fake task actions.</li>
               <li>• Call emergency meetings if sabotage or abnormal behavior is spotted.</li>
               <li>• <strong>WIN CONDITION:</strong> Complete the group task bar or successfully vote out the imposter.</li>
@@ -104,7 +104,7 @@ export const GameInfoPage: React.FC<GameInfoPageProps> = ({ setActiveTab }) => {
             <h4 className="font-pixel text-xs text-[#E5005A]">DAY 1 • 16 OCTOBER</h4>
             <p className="text-xs font-arcade mt-1 text-[#111827]">Rounds 1 to 3 & Preliminary Trials</p>
             <p className="text-xs text-[#111827]/80 mt-1 font-body">
-              Squad check-ins start at 09:30 AM in Room 318. Initial task station orientation and secret role assignment.
+              Squad check-ins start at 09:30 AM in Venue TBD. Initial task station orientation and secret role assignment.
             </p>
           </div>
           <div className="p-4 bg-[#F7E8B5] border-2 border-[#111827]">

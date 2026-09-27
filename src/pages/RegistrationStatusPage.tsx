@@ -286,7 +286,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
 
     doc.setFontSize(10);
     doc.setTextColor(0, 175, 198);
-    doc.text('AI DEVELOPERS GROUP (ADG) x MosaIC • SFIT ROOM NO. 318', 14, 28);
+    doc.text('AI DEVELOPERS GROUP (ADG) x MosaIC • SFIT VENUE TBD', 14, 28);
     doc.text(`Dates: 16–17 October 2026`, 14, 34);
 
     // Registration Details Box
@@ -304,7 +304,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     doc.text(`Registration Code: ${registration.registrationId}`, 20, 64);
     doc.text(`Registration Status: ${registration.status}`, 20, 71);
     doc.text(`Payment Status: ${registration.payment?.status || 'PENDING'}`, 20, 78);
-    doc.text(`Venue: SFIT Room No. 318 (Report at 09:30 AM)`, 20, 85);
+    doc.text(`Venue: SFIT Venue TBD (Report at 09:30 AM)`, 20, 85);
 
     // QR Code Placement (if available)
     if (registration.ticket?.qrCodeUrl) {
@@ -353,7 +353,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
     // Footer instructions
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text('Instructions: Present this digital or printed pass along with your SFIT college ID at Room 318.', 14, 280);
+    doc.text('Instructions: Present this digital or printed pass along with your SFIT college ID at Venue TBD.', 14, 280);
     doc.text('Issued by AI Developers Group (ADG). Fraudulent tickets will be disqualified.', 14, 285);
 
     doc.save(`${registration.registrationId}_CONFIRMATION.pdf`);
@@ -475,13 +475,13 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6 border-b border-gray-700 pb-5 sm:pb-6">
                 <div className="space-y-2 text-center sm:text-left">
                   <span className="bg-[#4CAF50] text-white font-pixel text-[10px] sm:text-xs px-2.5 sm:px-3 py-1 border border-white inline-block">
-                    ✓ ACCESS GRANTED • ROOM 318
+                    ✓ ACCESS GRANTED • VENUE TBD
                   </span>
                   <h3 className="font-pixel text-lg sm:text-2xl text-[#F7E8B5]">
                     OFFICIAL TOURNAMENT ENTRY PASS
                   </h3>
                   <p className="text-xs text-gray-300 font-body max-w-md">
-                    Present this pass on your phone or printout at the Room 318 entrance on 16 or 17 October. Proctors will scan the QR code to grant mission briefing kits.
+                    Present this pass on your phone or printout at the Venue TBD entrance on 16 or 17 October. Proctors will scan the QR code to grant mission briefing kits.
                   </p>
                 </div>
 
@@ -597,7 +597,7 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
                 </h3>
               </div>
               <p className="text-xs sm:text-sm font-body text-[#111827]/90 leading-relaxed">
-                Squad registration has been initiated, but payment is not yet completed. Complete payment via instant mock testing or scan the UPI QR code to confirm your slot in Room 318.
+                Squad registration has been initiated, but payment is not yet completed. Complete payment via instant mock testing or scan the UPI QR code to confirm your slot in Venue TBD.
               </p>
               <button
                 onClick={() => setShowPaymentModal(true)}
@@ -703,12 +703,12 @@ export const RegistrationStatusPage: React.FC<RegistrationStatusPageProps> = ({ 
               <div className="p-3 bg-[#F7E8B5]/50 border border-[#111827] space-y-1 font-mono">
                 <div>• Registration Code: {registration.registrationId}</div>
                 <div>• Squad Size: {registration.players?.length || 5} Players</div>
-                <div>• Venue: Room No. 318, St. Francis Institute of Technology</div>
+                <div>• Venue: Venue TBD, St. Francis Institute of Technology</div>
                 <div>• Dates: 16–17 October 2026</div>
                 <div>• Fee Status: PAID (Rs. 500)</div>
               </div>
               <p>
-                Please ensure all squad members carry their physical or digital SFIT ID cards to the check-in desk at Room 318. Secret roles and tasks will be distributed upon scanning your QR pass.
+                Please ensure all squad members carry their physical or digital SFIT ID cards to the check-in desk at Venue TBD. Secret roles and tasks will be distributed upon scanning your QR pass.
               </p>
               <p className="text-gray-500 italic">
                 "Trust no one. Complete your tasks. Watch the others."
